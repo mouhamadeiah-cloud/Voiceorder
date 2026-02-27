@@ -59,9 +59,10 @@
             border-radius: 12px;
             margin: 16px 0;
             font-size: 18px;
-            min-height: 100px;
+            min-height: 150px;
             text-align: left;
             white-space: pre-wrap;
+            direction: ltr;
         }
         
         .order-items {
@@ -101,6 +102,16 @@
             cursor: pointer;
             margin-top: 16px;
         }
+        
+        .debug-info {
+            background: #e2e8f0;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-top: 10px;
+            color: #333;
+            text-align: left;
+        }
     </style>
 </head>
 <body>
@@ -118,6 +129,7 @@
             <div class="recognized-text" id="recognizedText">
                 👆 Hier erscheint Ihre Bestellung
             </div>
+            <div class="debug-info" id="debugInfo"></div>
         </div>
         
         <div class="order-items" id="orderSection" style="display: none;">
@@ -133,12 +145,12 @@
     
     <script>
         // ===========================================
-        // 🔴 GEMINI KEY
+        // 🔴 GEMINI KEY - ضع مفتاحك هنا
         // ===========================================
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU"; // 🔴 ضع مفتاحك هنا
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";
         
         // ===========================================
-        // 🔴 قائمة ثابتة - Hardcoded Menu
+        // 🔴 قائمة ثابتة مع IDs كنصوص
         // ===========================================
         const MENU_ITEMS = [
             { id: "1", name: "Kookiesbecher" },
@@ -181,7 +193,7 @@ Bestimme die Menge (standardmäßig 1).
 Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
 `;
 
-                document.getElementById('recognizedText').innerHTML = '🤔 Gemini denkt nach...';
+                updateDebug("🤔 Gemini denkt nach...");
                 
                 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -198,36 +210,57 @@ Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
                 
             } catch (error) {
                 console.error("❌ Gemini Fehler:", error);
-                document.getElementById('recognizedText').innerHTML = 
-                    '❌ Gemini Fehler: ' + error.message;
+                updateDebug("❌ Gemini Fehler: " + error.message);
                 return null;
             }
         }
         
         // ===========================================
-        // Process Order
+        // Process Order - مع تصحيح IDs
         // ===========================================
         async function processOrder(text) {
-            document.getElementById('recognizedText').innerHTML = `🔍 "${text}"<br><small>Suche...</small>`;
+            updateDebug(`🔍 Suche nach: "${text}"`);
             
             const result = await askGemini(text);
             
             if (result && result.id) {
-                const item = MENU_ITEMS.find(i => i.id === result.id);
+                // 🔴 المشكلة هنا: Gemini قد يرجع ID كرقم أو نص
+                updateDebug(`🤖 Gemini sagt: ID=${result.id}, Menge=${result.menge}`);
+                
+                // 🔴 الحل: نحول الكل لنص للمقارنة
+                const item = MENU_ITEMS.find(i => String(i.id) === String(result.id));
+                
                 if (item) {
+                    updateDebug(`✅ Gefunden: ${item.name} (ID: ${item.id})`);
+                    
                     for (let i = 0; i < (result.menge || 1); i++) {
                         addToOrder(item.id, item.name);
                     }
+                    
                     document.getElementById('recognizedText').innerHTML = 
                         `✅ "${text}"<br><small>${item.name} x${result.menge || 1}</small>`;
                 } else {
+                    updateDebug(`❌ Kein Item mit ID ${result.id} gefunden`);
                     document.getElementById('recognizedText').innerHTML = 
-                        `❌ "${text}"<br><small>Gericht nicht in Datenbank</small>`;
+                        `❌ "${text}"<br><small>Gericht mit ID ${result.id} nicht gefunden</small>`;
+                    
+                    // عرض ال IDs المتاحة للمساعدة
+                    const availableIds = MENU_ITEMS.map(i => `${i.name} (${i.id})`).join(', ');
+                    updateDebug(`Verfügbare IDs: ${availableIds}`);
                 }
             } else {
+                updateDebug(`❌ Gemini konnte kein Gericht zuordnen`);
                 document.getElementById('recognizedText').innerHTML = 
                     `❌ "${text}"<br><small>Kein passendes Gericht</small>`;
             }
+        }
+        
+        // ===========================================
+        // Debug Funktion
+        // ===========================================
+        function updateDebug(msg) {
+            document.getElementById('debugInfo').innerHTML = msg;
+            console.log(msg);
         }
         
         // ===========================================
@@ -289,6 +322,7 @@ Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
                 isRecording = true;
                 micBtn.classList.add('recording');
                 document.getElementById('recognizedText').innerHTML = '🎤 Höre zu...';
+                updateDebug('🎤 Höre zu...');
             };
             
             recognition.onresult = function(event) {
@@ -333,7 +367,7 @@ Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
         // Send Order function
         async function sendOrder() {
             if (currentOrder.length === 0) return;
-            alert('Bestellung aufgegeben! (Demo - keine Firebase)');
+            alert('✅ Bestellung aufgegeben!');
             currentOrder = [];
             updateOrderDisplay();
         }
