@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍦 Die Primel Eiscafé - Speisekarte</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f8f5f0;
+        }
+        h1 {
+            color: #8B4513;
+            border-bottom: 2px solid #DEB887;
+            padding-bottom: 10px;
+        }
+        .kategorie {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .kategorie h2 {
+            color: #CD853F;
+            margin-top: 0;
+        }
+        .gericht {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+        }
+        .name {
+            font-weight: 600;
+            color: #333;
+        }
+        .id {
+            font-size: 12px;
+            color: #999;
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 8px;
+        }
+        .preis {
+            color: #8B4513;
+            font-weight: 600;
+        }
+        .hinweis {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🍦 Die Primel Eiscafé</h1>
+    <div class="hinweis">
+        ⓘ Diese Seite wird automatisch aus unserer Datenbank aktualisiert.
+    </div>
+    <div id="menu-container">Lade Speisekarte...</div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <script>
+        // 🔴 Firebase Config - HIER DEINE DATEN (schon vorhanden)
+        const firebaseConfig = {
+            apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
+            authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
+            databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "restaurantsysteme-eaff6",
+            storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
+            messagingSenderId: "891911663005",
+            appId: "1:891911663005:web:85672b40c90c158c2ad374"
+        };
+
+        // Firebase initialisieren
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // ===========================================
+        // Funktion zum Laden und Anzeigen der Karte
+        // ===========================================
+        async function loadMenu() {
+            try {
+                // 🔴 WICHTIG: Gemini liest diese Struktur!
+                // Holt alle Kategorien
+                const categoriesSnapshot = await db.collection('categories').get();
+                const categories = categoriesSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Holt alle aktiven Gerichte
+                const itemsSnapshot = await db.collection('items').where('active', '==', true).get();
+                const items = itemsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Gruppiere Gerichte nach Kategorie
+                const itemsByCategory = {};
+                items.forEach(item => {
+                    const catId = item.categoryId || 'default';
+                    if (!itemsByCategory[catId]) itemsByCategory[catId] = [];
+                    itemsByCategory[catId].push(item);
+                });
+
+                // HTML erstellen
+                let html = '';
+
+                // 🔴 Sortiere Kategorien nach Priorität (wichtig für Gemini)
+                const sortedCategories = categories.sort((a, b) => (b.priority || 1) - (a.priority || 1));
+
+                for (const category of sortedCategories) {
+                    const catItems = itemsByCategory[category.id] || [];
+                    if (catItems.length === 0) continue;
+
+                    html += `<div class="kategorie">`;
+                    html += `<h2>${category.name}</h2>`;
+
+                    // 🔴 Sortiere Gerichte alphabetisch für bessere Lesbarkeit
+                    const sortedItems = catItems.sort((a, b) => 
+                        (a.displayName || a.name).localeCompare(b.displayName || b.name)
+                    );
+
+                    for (const item of sortedItems) {
+                        const name = item.displayName || item.name;
+                        const price = (item.price || 0).toFixed(2);
+                        
+                        html += `
+                            <div class="gericht">
+                                <div>
+                                    <span class="name">${name}</span>
+                                    <span class="id">ID: ${item.id}</span>
+                                </div>
+                                <span class="preis">€${price}</span>
+                            </div>
+                        `;
+                    }
+
+                    html += `</div>`;
+                }
+
+                // Falls keine Gerichte
+                if (html === '') {
+                    html = '<div class="kategorie"><p>Keine Gerichte verfügbar</p></div>';
+                }
+
+                document.getElementById('menu-container').innerHTML = html;
+
+                // 🔴 Für Gemini: Logge die Struktur (wichtig zum Debuggen)
+                console.log('✅ Menü geladen mit', items.length, 'Gerichten');
+                console.log('📋 Kategorien:', categories.map(c => c.name));
+                
+            } catch (error) {
+                console.error('❌ Fehler:', error);
+                document.getElementById('menu-container').innerHTML = 
+                    '<div class="kategorie"><p>Fehler beim Laden der Speisekarte</p></div>';
+            }
+        }
+
+        // Start
+        loadMenu();
+    </script>
+</body>
+</html>
