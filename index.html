@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍽️ KI Bestellassistent</title>
+    <title>🍽️ KI Bestellassistent - Gast</title>
     <style>
         * { box-sizing: border-box; font-family: system-ui, sans-serif; }
         body { margin: 0; background: #f5f5f5; }
@@ -15,9 +15,11 @@
             padding: 24px 16px;
             border-radius: 0 0 30px 30px;
             margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         
         h1 { margin: 0; font-size: 28px; }
+        .subtitle { margin: 8px 0 0; opacity: 0.9; font-size: 16px; }
         
         .voice-section {
             background: white;
@@ -42,6 +44,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         
         .mic-button.recording {
@@ -50,9 +53,9 @@
         }
         
         @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
+            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4); }
+            50% { transform: scale(1.1); box-shadow: 0 4px 25px rgba(229, 62, 62, 0.6); }
+            100% { transform: scale(1); box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4); }
         }
         
         .recognized-text {
@@ -62,7 +65,11 @@
             margin: 16px 0;
             font-size: 18px;
             min-height: 60px;
+            text-align: right;
+            direction: rtl;
         }
+        
+        .recognized-text span { color: #667eea; font-weight: 600; }
         
         .order-items {
             background: white;
@@ -82,6 +89,9 @@
             border-left: 4px solid #667eea;
         }
         
+        .order-item-info { flex: 1; }
+        .order-item-name { font-weight: 600; font-size: 16px; }
+        
         .delete-btn {
             background: #feb2b2;
             color: #c53030;
@@ -90,6 +100,10 @@
             height: 36px;
             border-radius: 50%;
             cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .send-btn {
@@ -99,9 +113,23 @@
             padding: 16px;
             border-radius: 30px;
             font-size: 18px;
+            font-weight: 600;
             width: 100%;
             cursor: pointer;
+            transition: all 0.2s;
             margin-top: 16px;
+        }
+        
+        .send-btn:hover { background: #38a169; }
+        
+        .total-section {
+            background: #e2e8f0;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
         }
         
         .menu-section {
@@ -109,6 +137,13 @@
             border-radius: 20px;
             padding: 16px;
             margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .menu-section h2 {
+            margin: 0 0 16px 0;
+            font-size: 20px;
+            color: #333;
         }
         
         .menu-item {
@@ -119,29 +154,29 @@
             align-items: center;
         }
         
+        .menu-item:last-child { border-bottom: none; }
+        
+        .item-name { font-weight: 600; color: #333; font-size: 18px; }
+        .item-price { color: #667eea; font-weight: 600; }
+        
         .add-btn {
             background: #667eea;
             color: white;
             border: none;
             padding: 8px 16px;
             border-radius: 25px;
+            font-weight: 600;
             cursor: pointer;
+            transition: all 0.2s;
         }
+        
+        .add-btn:hover { background: #5a67d8; }
         
         .loading {
             text-align: center;
             padding: 40px;
             color: #667eea;
-        }
-        
-        .total-section {
-            background: #e2e8f0;
-            padding: 16px;
-            border-radius: 12px;
-            margin-top: 16px;
-            display: flex;
-            justify-content: space-between;
-            font-weight: 600;
+            font-size: 18px;
         }
     </style>
 </head>
@@ -157,7 +192,7 @@
         <!-- Voice Input -->
         <div class="voice-section">
             <button class="mic-button" id="micBtn">🎤</button>
-            <p>Drücken und halten - Sprechen - Loslassen</p>
+            <p>Tippen Sie auf das Mikrofon und sprechen Sie Ihre Bestellung</p>
             <div class="recognized-text" id="recognizedText">
                 <span>👆</span> Hier erscheint Ihre Bestellung
             </div>
@@ -165,22 +200,24 @@
         
         <!-- Current Order -->
         <div class="order-items" id="orderSection" style="display: none;">
-            <h3>📋 Ihre Bestellung</h3>
+            <h2 style="margin-top: 0;">📋 Ihre Bestellung</h2>
             <div id="orderList"></div>
-            <div class="total-section">
+            <div class="total-section" id="totalSection">
                 <span>Gesamt:</span>
                 <span id="totalItems">0 Artikel</span>
             </div>
             <button class="send-btn" id="sendOrderBtn">✅ Bestellung aufgeben</button>
         </div>
         
-        <!-- Menu -->
+        <!-- Menu Container -->
         <div id="menuContainer" class="loading">Menü wird geladen...</div>
     </div>
 
-    <!-- Firebase & Gemini -->
+    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Gemini API SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
     
     <script>
@@ -190,6 +227,7 @@
         const firebaseConfig = {
             apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
             authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
+            databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "restaurantsysteme-eaff6",
             storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
             messagingSenderId: "891911663005",
@@ -200,93 +238,93 @@
         const db = firebase.firestore();
         
         // ===========================================
-        // GEMINI API - DEIN KEY HIER
+        // GEMINI API - ضع مفتاحك هنا
         // ===========================================
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- Dein echter Key!
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- ضع مفتاح Gemini هنا
         
         // ===========================================
         // State
         // ===========================================
         let menuItems = [];
+        let categories = [];
+        let extras = [];
         let currentOrder = [];
-        let recognition = null;
-        let isRecording = false;
+        let lastProcessedText = '';
+        let processingTimeout = null;
         
         // ===========================================
-        // Load Menu
+        // Load Menu Data from Firebase
         // ===========================================
-        async function loadMenu() {
+        async function loadMenuData() {
             try {
-                const snapshot = await db.collection('items').where('active', '==', true).get();
-                menuItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                console.log('📥 Lade Daten von Firebase...');
+                
+                const [categoriesSnap, extrasSnap, itemsSnap] = await Promise.all([
+                    db.collection('categories').get(),
+                    db.collection('extras').get(),
+                    db.collection('items').where('active', '==', true).get()
+                ]);
+                
+                categories = categoriesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                extras = extrasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                menuItems = itemsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                console.log('✅ Daten geladen:', menuItems.length, 'Gerichte');
                 displayMenu();
-                console.log('✅ Menü geladen:', menuItems);
+                
             } catch (error) {
-                console.error('❌ Fehler:', error);
+                console.error('❌ Fehler beim Laden:', error);
+                document.getElementById('menuContainer').innerHTML = 
+                    '<div class="menu-section">Fehler beim Laden des Menüs</div>';
             }
         }
         
+        // ===========================================
+        // Display Menu
+        // ===========================================
         function displayMenu() {
             const container = document.getElementById('menuContainer');
-            let html = '<div class="menu-section"><h3>🍽️ Speisekarte</h3>';
             
+            if (menuItems.length === 0) {
+                container.innerHTML = '<div class="menu-section">Keine Gerichte verfügbar</div>';
+                return;
+            }
+            
+            // Group by category
+            const itemsByCategory = {};
             menuItems.forEach(item => {
-                const name = item.displayName || item.name || 'Unbekannt';
-                const price = item.price || 0;
-                
-                html += `
-                    <div class="menu-item">
-                        <div>
-                            <strong>${name}</strong><br>
-                            €${price.toFixed(2)}
-                        </div>
-                        <button class="add-btn" onclick="addToOrder('${item.id}')">+</button>
-                    </div>
-                `;
+                const catId = item.categoryId || 'default';
+                if (!itemsByCategory[catId]) itemsByCategory[catId] = [];
+                itemsByCategory[catId].push(item);
             });
             
-            container.innerHTML = html + '</div>';
-        }
-        
-        // ===========================================
-        // Speech Recognition (funktioniert!)
-        // ===========================================
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'de-DE';
-            recognition.continuous = false;
-            recognition.interimResults = true;
+            let html = '';
             
-            recognition.onstart = function() {
-                isRecording = true;
-                micBtn.classList.add('recording');
-                document.getElementById('recognizedText').innerHTML = '🎤 Höre zu... Sprechen Sie jetzt';
-            };
-            
-            recognition.onresult = function(event) {
-                let transcript = '';
-                for (let i = 0; i < event.results.length; i++) {
-                    transcript += event.results[i][0].transcript;
-                }
+            categories.forEach(category => {
+                const catItems = itemsByCategory[category.id] || [];
+                if (catItems.length === 0) return;
                 
-                document.getElementById('recognizedText').innerHTML = 
-                    `<span>🎤</span> "${transcript}"<br><small>Verarbeite...</small>`;
+                html += `<div class="menu-section"><h2>${category.name}</h2>`;
                 
-                // Sende an Gemini
-                understandWithGemini(transcript);
-            };
+                catItems.forEach(item => {
+                    const itemName = item.displayName || item.name || 'Unbekannt';
+                    
+                    html += `
+                        <div class="menu-item">
+                            <div>
+                                <span class="item-name">${itemName}</span>
+                                <br>
+                                <span class="item-price">€${(item.price || 0).toFixed(2)}</span>
+                            </div>
+                            <button class="add-btn" onclick="addToOrder('${item.id}')">+</button>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            });
             
-            recognition.onerror = function(event) {
-                console.error('Fehler:', event.error);
-                document.getElementById('recognizedText').innerHTML = '❌ Fehler beim Hören';
-                stopRecording();
-            };
-            
-            recognition.onend = function() {
-                stopRecording();
-            };
+            container.innerHTML = html;
         }
         
         // ===========================================
@@ -295,57 +333,86 @@
         async function understandWithGemini(text) {
             if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('XXXXX')) {
                 console.warn('⚠️ Kein gültiger Gemini Key');
+                document.getElementById('recognizedText').innerHTML = 
+                    `<span>❌</span> "${text}"<br><small>Gemini Key fehlt oder ist ungültig</small>`;
                 return;
             }
-            
+
             try {
+                // قائمة الأطباق
                 const menuList = menuItems.map(item => 
                     `- ${item.displayName || item.name}`
                 ).join('\n');
-                
+
                 const prompt = `
-Du bist ein Kellner. Der Gast sagt: "${text}"
+Du bist ein Kellner in einem Restaurant.
+Der Gast sagt: "${text}"
 
 Speisekarte:
 ${menuList}
 
-Verstehe die Bestellung. Antworte NUR mit JSON:
+Verstehe was der Gast bestellen möchte.
+Antworte NUR mit einem JSON-Array:
 [{"gericht": "GENAUER NAME", "menge": ZAHL}]
 
-Beispiel: [{"gericht": "Spaghetti", "menge": 2}]
+Beispiel: Für "zweimal Spaghetti" -> [{"gericht": "Spaghetti", "menge": 2}]
+
+Wenn du nichts verstehst, antworte mit []
 `;
+
+                console.log('🤖 Sende an Gemini:', text);
                 
                 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
                 
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
-                const jsonText = response.text().replace(/```json|```/g, '').trim();
+                let jsonText = response.text();
+                
+                // تنظيف النص من علامات Markdown
+                jsonText = jsonText.replace(/```json|```/g, '').trim();
+                
+                console.log('🤖 Gemini Antwort:', jsonText);
                 
                 const items = JSON.parse(jsonText);
                 
-                items.forEach(item => {
-                    const menuItem = menuItems.find(m => 
-                        (m.displayName || m.name).toLowerCase().includes(item.gericht.toLowerCase())
-                    );
-                    
-                    if (menuItem) {
-                        for (let i = 0; i < (item.menge || 1); i++) {
-                            addToOrder(menuItem.id, menuItem.displayName || menuItem.name);
-                        }
-                    }
-                });
-                
                 if (items.length > 0) {
+                    items.forEach(item => {
+                        // البحث عن الطبق في القائمة
+                        const menuItem = menuItems.find(m => 
+                            (m.displayName || m.name).toLowerCase() === item.gericht.toLowerCase()
+                        );
+                        
+                        if (menuItem) {
+                            for (let i = 0; i < (item.menge || 1); i++) {
+                                addToOrder(menuItem.id, menuItem.displayName || menuItem.name);
+                            }
+                        }
+                    });
+                    
+                    const foundText = items.map(i => i.gericht + ' (x' + i.menge + ')').join(', ');
                     document.getElementById('recognizedText').innerHTML = 
-                        `<span>✅</span> "${text}"<br><small>Gefunden: ${items.map(i => i.gericht).join(', ')}</small>`;
+                        `<span>✅</span> "${text}"<br><small>Gefunden: ${foundText}</small>`;
+                } else {
+                    document.getElementById('recognizedText').innerHTML = 
+                        `<span>❌</span> "${text}"<br><small>Keine Gerichte erkannt</small>`;
                 }
                 
             } catch (error) {
                 console.error('❌ Gemini Fehler:', error);
                 document.getElementById('recognizedText').innerHTML = 
-                    `<span>❌</span> "${text}"<br><small>Fehler bei der Verarbeitung</small>`;
+                    `<span>❌</span> "${text}"<br><small>Fehler bei der Verarbeitung: ${error.message}</small>`;
             }
+        }
+        
+        // ===========================================
+        // Process Order
+        // ===========================================
+        async function processOrderText(text) {
+            if (text === lastProcessedText) return;
+            lastProcessedText = text;
+            
+            await understandWithGemini(text);
         }
         
         // ===========================================
@@ -384,8 +451,12 @@ Beispiel: [{"gericht": "Spaghetti", "menge": 2}]
                 currentOrder.forEach((item, i) => {
                     html += `
                         <div class="order-item">
-                            <span>${item.name}</span>
-                            <button class="delete-btn" onclick="removeFromOrder(${i})">✕</button>
+                            <div class="order-item-info">
+                                <div class="order-item-name">${item.name}</div>
+                            </div>
+                            <div class="order-item-actions">
+                                <button class="delete-btn" onclick="removeFromOrder(${i})">✕</button>
+                            </div>
                         </div>
                     `;
                 });
@@ -398,39 +469,116 @@ Beispiel: [{"gericht": "Spaghetti", "menge": 2}]
         }
         
         // ===========================================
-        // Send Order
+        // Send Order to Firebase
         // ===========================================
         async function sendOrder() {
-            if (currentOrder.length === 0) return;
+            if (currentOrder.length === 0) {
+                alert("Keine Artikel in der Bestellung");
+                return;
+            }
             
-            const grouped = {};
-            currentOrder.forEach(item => {
-                if (!grouped[item.id]) {
-                    grouped[item.id] = { name: item.name, quantity: 1 };
-                } else {
-                    grouped[item.id].quantity += 1;
-                }
-            });
-            
-            await db.collection('orders').add({
-                items: Object.values(grouped),
-                tableNumber: 1,
-                status: 'pending',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                orderNumber: Math.floor(Math.random() * 9000) + 1000
-            });
-            
-            currentOrder = [];
-            updateOrderDisplay();
-            alert('✅ Bestellung aufgegeben!');
+            try {
+                // تجميع العناصر المتشابهة
+                const grouped = {};
+                currentOrder.forEach(item => {
+                    if (!grouped[item.id]) {
+                        grouped[item.id] = {
+                            name: item.name,
+                            quantity: 1
+                        };
+                    } else {
+                        grouped[item.id].quantity += 1;
+                    }
+                });
+                
+                const orderData = {
+                    items: Object.values(grouped),
+                    tableNumber: 1,
+                    status: 'pending',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    orderNumber: Math.floor(Math.random() * 9000) + 1000
+                };
+                
+                console.log('📤 Sende Bestellung:', orderData);
+                
+                await db.collection('orders').add(orderData);
+                
+                currentOrder = [];
+                updateOrderDisplay();
+                alert('✅ Bestellung aufgegeben!');
+                
+            } catch (error) {
+                console.error('❌ Fehler:', error);
+                alert('Fehler: ' + error.message);
+            }
         }
         
         // ===========================================
-        // Controls
+        // Speech Recognition
         // ===========================================
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isRecording = false;
+        
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'de-DE';
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+            
+            recognition.onstart = function() {
+                isRecording = true;
+                micBtn.classList.add('recording');
+                document.getElementById('recognizedText').innerHTML = '🎤 Höre zu... Sprechen Sie jetzt';
+                console.log('🎤 Recording started');
+            };
+            
+            recognition.onresult = function(event) {
+                let finalTranscript = '';
+                
+                for (let i = 0; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript = event.results[i][0].transcript;
+                    }
+                }
+                
+                if (finalTranscript) {
+                    console.log('✅ Erkannt:', finalTranscript);
+                    
+                    document.getElementById('recognizedText').innerHTML = 
+                        `<span>🎤</span> "${finalTranscript}"<br><small>Verarbeite...</small>`;
+                    
+                    // تأخير بسيط للمعالجة
+                    setTimeout(() => {
+                        processOrderText(finalTranscript);
+                    }, 300);
+                }
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('❌ Speech error:', event.error);
+                document.getElementById('recognizedText').innerHTML = 
+                    '<span>❌</span> Fehler beim Hören';
+                stopRecording();
+            };
+            
+            recognition.onend = function() {
+                stopRecording();
+            };
+            
+        } else {
+            document.getElementById('recognizedText').innerHTML = 
+                '<span>❌</span> Keine Sprachunterstützung';
+        }
+        
         function startRecording() {
             if (recognition && !isRecording) {
-                recognition.start();
+                try {
+                    recognition.start();
+                } catch (e) {
+                    console.error('Start fehlgeschlagen:', e);
+                }
             }
         }
         
@@ -440,16 +588,16 @@ Beispiel: [{"gericht": "Spaghetti", "menge": 2}]
         }
         
         // ===========================================
-        // Event Listeners
+        // Initialize
         // ===========================================
+        loadMenuData();
+        
         document.getElementById('micBtn').addEventListener('click', startRecording);
         document.getElementById('sendOrderBtn').addEventListener('click', sendOrder);
         
+        // Global functions
         window.addToOrder = addToOrder;
         window.removeFromOrder = removeFromOrder;
-        
-        // Start
-        loadMenu();
     </script>
 </body>
 </html>
