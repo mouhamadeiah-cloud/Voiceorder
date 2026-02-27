@@ -59,9 +59,8 @@
             border-radius: 12px;
             margin: 16px 0;
             font-size: 18px;
-            min-height: 200px;
+            min-height: 100px;
             text-align: left;
-            direction: ltr;
             white-space: pre-wrap;
         }
         
@@ -102,26 +101,6 @@
             cursor: pointer;
             margin-top: 16px;
         }
-        
-        .error-message {
-            background: #fee;
-            color: #c00;
-            padding: 16px;
-            border-radius: 12px;
-            margin: 16px 0;
-            border: 1px solid #fcc;
-        }
-        
-        .status-badge {
-            background: #e2e8f0;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 14px;
-            display: inline-block;
-            margin-bottom: 10px;
-        }
-        .status-badge.success { background: #c6f6d5; color: #22543d; }
-        .status-badge.error { background: #fed7d7; color: #742a2a; }
     </style>
 </head>
 <body>
@@ -134,7 +113,6 @@
     
     <div class="container">
         <div class="voice-section">
-            <div id="geminiStatus" class="status-badge">⏳ Lade Gemini...</div>
             <button class="mic-button" id="micBtn">🎤</button>
             <p>Tippen Sie auf das Mikrofon und sprechen Sie</p>
             <div class="recognized-text" id="recognizedText">
@@ -150,69 +128,35 @@
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Gemini API - رابط واحد ثابت -->
+    <!-- Gemini API -->
     <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
-    <script>console.log('✅ Gemini geladen:', typeof GoogleGenerativeAI);</script>
     
-    <!-- Hauptscript -->
     <script>
         // ===========================================
-        // 🔴 CONFIGURATION
+        // 🔴 GEMINI KEY
         // ===========================================
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU"; // 🔴 Dein Key hier
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU"; // 🔴 ضع مفتاحك هنا
         
-        const firebaseConfig = {
-            apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
-            authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
-            projectId: "restaurantsysteme-eaff6",
-            storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
-            messagingSenderId: "891911663005",
-            appId: "1:891911663005:web:85672b40c90c158c2ad374"
-        };
-        
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        // ===========================================
+        // 🔴 قائمة ثابتة - Hardcoded Menu
+        // ===========================================
+        const MENU_ITEMS = [
+            { id: "1", name: "Kookiesbecher" },
+            { id: "2", name: "Erdbeerbecher" },
+            { id: "3", name: "Spaghettieis" },
+            { id: "4", name: "Spagetti Erdbeer" },
+            { id: "5", name: "Spagetti kiwi" }
+        ];
         
         // ===========================================
         // State
         // ===========================================
-        let menuItems = [];
         let currentOrder = [];
-        let menuLoaded = false;
         
-        // ===========================================
-        // Load Menu from Firebase
-        // ===========================================
-        async function loadMenuFromFirebase() {
-            try {
-                const snapshot = await db.collection('items').where('active', '==', true).get();
-                menuItems = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    name: doc.data().displayName || doc.data().name,
-                    price: doc.data().price || 0
-                }));
-                
-                menuLoaded = true;
-                
-                // عرض القائمة على الشاشة للتأكد
-                const menuList = menuItems.map(item => item.name).join('\n');
-                document.getElementById('recognizedText').innerHTML = 
-                    '<strong>📋 القائمة المحملة:</strong><br>' + 
-                    menuList + 
-                    `<br><small>عدد الأطباق: ${menuItems.length}</small>`;
-                
-                return true;
-            } catch (error) {
-                console.error("❌ Firebase Fehler:", error);
-                document.getElementById('recognizedText').innerHTML = 
-                    '❌ خطأ في تحميل القائمة: ' + error.message;
-                return false;
-            }
-        }
+        // عرض القائمة على الشاشة
+        const menuList = MENU_ITEMS.map(item => item.name).join('\n');
+        document.getElementById('recognizedText').innerHTML = 
+            '<strong>📋 القائمة:</strong><br>' + menuList;
         
         // ===========================================
         // Gemini function
@@ -220,7 +164,7 @@
         async function askGemini(userText) {
             try {
                 // Menu als Text für Gemini
-                const menuList = menuItems.map(item => 
+                const menuText = MENU_ITEMS.map(item => 
                     `- ${item.name} (ID: ${item.id})`
                 ).join('\n');
                 
@@ -229,7 +173,7 @@ Du bist ein Kellner in "Die Primel Eiscafé".
 Der Gast sagt: "${userText}"
 
 SPEISEKARTE:
-${menuList}
+${menuText}
 
 Finde das passendste Gericht.
 Bestimme die Menge (standardmäßig 1).
@@ -269,10 +213,10 @@ Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
             const result = await askGemini(text);
             
             if (result && result.id) {
-                const item = menuItems.find(i => i.id === result.id);
+                const item = MENU_ITEMS.find(i => i.id === result.id);
                 if (item) {
                     for (let i = 0; i < (result.menge || 1); i++) {
-                        addToOrder(result.id, item.name);
+                        addToOrder(item.id, item.name);
                     }
                     document.getElementById('recognizedText').innerHTML = 
                         `✅ "${text}"<br><small>${item.name} x${result.menge || 1}</small>`;
@@ -329,34 +273,6 @@ Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
         }
         
         // ===========================================
-        // Send Order
-        // ===========================================
-        async function sendOrder() {
-            if (currentOrder.length === 0) return;
-            
-            const grouped = {};
-            currentOrder.forEach(item => {
-                if (!grouped[item.id]) {
-                    grouped[item.id] = { name: item.name, quantity: 1 };
-                } else {
-                    grouped[item.id].quantity += 1;
-                }
-            });
-            
-            await db.collection('orders').add({
-                items: Object.values(grouped),
-                tableNumber: 1,
-                status: 'pending',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                orderNumber: Math.floor(Math.random() * 9000) + 1000
-            });
-            
-            currentOrder = [];
-            updateOrderDisplay();
-            alert('✅ Bestellung aufgegeben!');
-        }
-        
-        // ===========================================
         // Speech Recognition
         // ===========================================
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -397,7 +313,6 @@ Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
         }
         
         function startRecording() {
-            if (!menuLoaded) return;
             if (recognition && !isRecording) recognition.start();
         }
         
@@ -407,29 +322,21 @@ Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
         }
         
         // ===========================================
-        // Initialize
-        // ===========================================
-        async function init() {
-            // Gemini Status
-            if (typeof GoogleGenerativeAI !== 'undefined') {
-                document.getElementById('geminiStatus').textContent = '✅ Gemini bereit';
-                document.getElementById('geminiStatus').className = 'status-badge success';
-            } else {
-                document.getElementById('geminiStatus').textContent = '❌ Gemini nicht geladen';
-                document.getElementById('geminiStatus').className = 'status-badge error';
-            }
-            
-            await loadMenuFromFirebase();
-        }
-        
-        init();
-        
         // Event Listeners
+        // ===========================================
         document.getElementById('micBtn').addEventListener('click', startRecording);
         document.getElementById('sendOrderBtn').addEventListener('click', sendOrder);
         
         window.addToOrder = addToOrder;
         window.removeFromOrder = removeFromOrder;
+        
+        // Send Order function
+        async function sendOrder() {
+            if (currentOrder.length === 0) return;
+            alert('Bestellung aufgegeben! (Demo - keine Firebase)');
+            currentOrder = [];
+            updateOrderDisplay();
+        }
     </script>
 </body>
 </html>
