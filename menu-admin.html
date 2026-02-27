@@ -3,174 +3,247 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍦 Die Primel Eiscafé - Speisekarte</title>
+    <title>Auto Management - Kundenliste</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
     <style>
-        body {
-            font-family: system-ui, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background: #f8f5f0;
+        :root {
+            --nav-bg: #1a1a1a;
+            --accent-green: #27ae60;
+            --input-border: #dcdde1;
+            --gray-text: #718093;
         }
-        h1 {
-            color: #8B4513;
-            border-bottom: 2px solid #DEB887;
-            padding-bottom: 10px;
+
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; background: #f4f7f6; color: #2f3640; padding-top: 70px; }
+
+        #navbar {
+            background: var(--nav-bg); height: 50px; display: flex; align-items: center;
+            padding: 0 20px; color: white; position: fixed; top: 0; width: 100%; z-index: 1000;
         }
-        .kategorie {
-            background: white;
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .brand { font-weight: bold; color: var(--accent-green); margin-right: 30px; letter-spacing: 1px; }
+        .nav-links { display: flex; flex-direction: row; align-items: center; list-style: none; margin: 0; padding: 0; }
+        .nav-item { margin: 0 15px; cursor: pointer; color: #ccc; font-size: 14px; transition: 0.3s; text-decoration: none; }
+        .nav-item:hover, .nav-item.active { color: var(--accent-green); }
+
+        .filter-container {
+            max-width: 1200px; margin: 0 auto 20px auto; display: flex; gap: 15px; 
+            padding: 0 20px; align-items: center;
         }
-        .kategorie h2 {
-            color: #CD853F;
-            margin-top: 0;
+        .search-box { flex: 1; padding: 10px; border-radius: 4px; border: 1px solid var(--input-border); outline: none; }
+        .filter-dropdown { padding: 10px; border-radius: 4px; border: 1px solid var(--input-border); cursor: pointer; }
+        .counter { font-weight: bold; color: var(--nav-bg); min-width: 120px; }
+
+        .card-list { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .customer-card {
+            background: white; border-radius: 8px; margin-bottom: 10px; display: flex;
+            align-items: center; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid transparent; transition: 0.2s; cursor: pointer; position: relative;
         }
-        .gericht {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px dashed #eee;
+        .customer-card:hover { border-color: var(--accent-green); }
+        .customer-card.selected { background: #e9ecef !important; border-color: var(--accent-green); }
+
+        .sec-left { width: 120px; text-align: center; border-right: 1px solid #eee; font-size: 13px; font-weight: bold; }
+        .sec-mid { flex: 2; padding: 0 20px; }
+        .sec-address { flex: 1.5; font-size: 13px; color: #666; border-left: 1px solid #eee; padding-left: 20px; }
+        .sec-tax { width: 180px; text-align: right; font-size: 12px; color: var(--gray-text); }
+
+        .type-icon { font-size: 18px; display: block; margin-bottom: 3px; }
+        .sub-text { display: block; font-size: 12px; color: var(--gray-text); margin-top: 4px; }
+
+        .quick-actions {
+            position: absolute; right: 20px; top: 10px; background: var(--nav-bg);
+            padding: 5px 10px; border-radius: 4px; display: none; gap: 8px; z-index: 5;
         }
-        .name {
-            font-weight: 600;
-            color: #333;
+        .customer-card.selected .quick-actions { display: flex; }
+        .act-btn { padding: 5px 12px; border: none; border-radius: 3px; color: white; cursor: pointer; font-size: 11px; font-weight: bold; }
+        .btn-edit { background: #3498db; }
+        .btn-bill { background: var(--accent-green); }
+
+        .overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 2000;
         }
-        .id {
-            font-size: 12px;
-            color: #999;
-            background: #f0f0f0;
-            padding: 2px 6px;
-            border-radius: 10px;
-            margin-left: 8px;
-        }
-        .preis {
-            color: #8B4513;
-            font-weight: 600;
-        }
-        .hinweis {
-            background: #fff3cd;
-            border: 1px solid #ffeeba;
-            padding: 10px;
-            border-radius: 8px;
-            margin: 10px 0;
-            font-size: 14px;
-        }
+        .modal { background: white; width: 90%; max-width: 500px; padding: 25px; border-radius: 8px; position: relative; }
+        .close-btn { position: absolute; right: 15px; top: 15px; cursor: pointer; font-size: 20px; font-weight: bold; }
+        .detail-row { margin-bottom: 12px; border-bottom: 1px solid #f0f0f0; padding-bottom: 5px; }
+        .detail-label { font-size: 11px; color: var(--gray-text); font-weight: bold; display: block; }
     </style>
 </head>
 <body>
-    <h1>🍦 Die Primel Eiscafé</h1>
-    <div class="hinweis">
-        ⓘ Diese Seite wird automatisch aus unserer Datenbank aktualisiert.
-    </div>
-    <div id="menu-container">Lade Speisekarte...</div>
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <nav id="navbar">
+        <div class="brand">AUTO MANAGEMENT</div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-item">Neu</a>
+            <a href="lager.html" class="nav-item">Mein Lager</a>
+            <a href="kunden.html" class="nav-item active">Kundenliste</a>
+            <a href="operation.html" class="nav-item">Operations</a>
+            <a href="rechnung.html" class="nav-item">Rechnungen</a>
+            <a href="settings.html" class="nav-item">Settings</a>
+        </div>
+    </nav>
+
+    <div class="filter-container">
+        <input type="text" id="custSearch" class="search-box" placeholder="Suche (Name, Telefon, PLZ, KD-Nr)..." oninput="applyFilters()">
+        
+        <select id="typeFilter" class="filter-dropdown" onchange="applyFilters()">
+            <option value="all">Alle Kunden</option>
+            <option value="Privat">Privatpersonen</option>
+            <option value="Gewerblich">Gewerbliche Kunden</option>
+        </select>
+        
+        <div class="counter">Kunden: <span id="totalCust">0</span></div>
+    </div>
+
+    <div class="card-list" id="customerList"></div>
+
+    <div id="custOverlay" class="overlay" onclick="closeOverlay()">
+        <div class="modal" onclick="event.stopPropagation()">
+            <span class="close-btn" onclick="closeOverlay()">×</span>
+            <h3 id="detName" style="margin-top: 0; color: var(--accent-green);"></h3>
+            <div id="detContent"></div>
+            <button onclick="closeOverlay()" style="margin-top:20px; width:100%; padding:10px; cursor:pointer; background: #eee; border:none; border-radius:4px;">Schließen</button>
+        </div>
+    </div>
 
     <script>
-        // 🔴 Firebase Config - HIER DEINE DATEN (schon vorhanden)
         const firebaseConfig = {
-            apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
-            authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
-            databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "restaurantsysteme-eaff6",
-            storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
-            messagingSenderId: "891911663005",
-            appId: "1:891911663005:web:85672b40c90c158c2ad374"
+            apiKey: "AIzaSyBYPa1h-VytnKtdaqysaexhwZmFXNKytBo",
+            authDomain: "autoohandel-bf5f2.firebaseapp.com",
+            databaseURL: "https://autoohandel-bf5f2-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "autoohandel-bf5f2",
+            storageBucket: "autoohandel-bf5f2.firebasestorage.app",
+            messagingSenderId: "25702608206",
+            appId: "1:25702608206:web:b1b262e51155591015821f"
         };
-
-        // Firebase initialisieren
         firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        const db = firebase.database();
 
-        // ===========================================
-        // Funktion zum Laden und Anzeigen der Karte
-        // ===========================================
-        async function loadMenu() {
-            try {
-                // 🔴 WICHTIG: Gemini liest diese Struktur!
-                // Holt alle Kategorien
-                const categoriesSnapshot = await db.collection('categories').get();
-                const categories = categoriesSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+        let allCustomers = [];
+        let selectedId = null;
 
-                // Holt alle aktiven Gerichte
-                const itemsSnapshot = await db.collection('items').where('active', '==', true).get();
-                const items = itemsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-
-                // Gruppiere Gerichte nach Kategorie
-                const itemsByCategory = {};
-                items.forEach(item => {
-                    const catId = item.categoryId || 'default';
-                    if (!itemsByCategory[catId]) itemsByCategory[catId] = [];
-                    itemsByCategory[catId].push(item);
-                });
-
-                // HTML erstellen
-                let html = '';
-
-                // 🔴 Sortiere Kategorien nach Priorität (wichtig für Gemini)
-                const sortedCategories = categories.sort((a, b) => (b.priority || 1) - (a.priority || 1));
-
-                for (const category of sortedCategories) {
-                    const catItems = itemsByCategory[category.id] || [];
-                    if (catItems.length === 0) continue;
-
-                    html += `<div class="kategorie">`;
-                    html += `<h2>${category.name}</h2>`;
-
-                    // 🔴 Sortiere Gerichte alphabetisch für bessere Lesbarkeit
-                    const sortedItems = catItems.sort((a, b) => 
-                        (a.displayName || a.name).localeCompare(b.displayName || b.name)
-                    );
-
-                    for (const item of sortedItems) {
-                        const name = item.displayName || item.name;
-                        const price = (item.price || 0).toFixed(2);
-                        
-                        html += `
-                            <div class="gericht">
-                                <div>
-                                    <span class="name">${name}</span>
-                                    <span class="id">ID: ${item.id}</span>
-                                </div>
-                                <span class="preis">€${price}</span>
-                            </div>
-                        `;
-                    }
-
-                    html += `</div>`;
-                }
-
-                // Falls keine Gerichte
-                if (html === '') {
-                    html = '<div class="kategorie"><p>Keine Gerichte verfügbar</p></div>';
-                }
-
-                document.getElementById('menu-container').innerHTML = html;
-
-                // 🔴 Für Gemini: Logge die Struktur (wichtig zum Debuggen)
-                console.log('✅ Menü geladen mit', items.length, 'Gerichten');
-                console.log('📋 Kategorien:', categories.map(c => c.name));
-                
-            } catch (error) {
-                console.error('❌ Fehler:', error);
-                document.getElementById('menu-container').innerHTML = 
-                    '<div class="kategorie"><p>Fehler beim Laden der Speisekarte</p></div>';
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.customer-card')) {
+                selectedId = null;
+                applyFilters(); 
             }
+        });
+
+        function fetchCustomers() {
+            db.ref('kunden').on('value', snapshot => {
+                const data = snapshot.val();
+                allCustomers = [];
+                if (data) {
+                    for(let id in data) {
+                        allCustomers.push({ id, ...data[id] });
+                    }
+                }
+                applyFilters();
+            });
         }
 
-        // Start
-        loadMenu();
+        function applyFilters() {
+            const searchQuery = document.getElementById('custSearch').value.toLowerCase().trim();
+            const filterValue = document.getElementById('typeFilter').value;
+            
+            const filteredData = allCustomers.filter(customer => {
+                const firstName = (customer.k_vorname || "").toLowerCase();
+                const lastName = (customer.k_nachname || "").toLowerCase();
+                const fullName = firstName + " " + lastName;
+                const phone = (customer.k_phone || "").toLowerCase();
+                const plz = (customer.k_plz || "").toLowerCase();
+                const kundenId = (customer.kundenId || "").toLowerCase();
+                
+                const matchesSearch = fullName.includes(searchQuery) || 
+                                     phone.includes(searchQuery) || 
+                                     plz.includes(searchQuery) ||
+                                     kundenId.includes(searchQuery);
+
+                const customerType = (customer.k_type || "Privat").trim();
+                const matchesType = (filterValue === "all") || (customerType === filterValue);
+
+                return matchesSearch && matchesType;
+            });
+
+            renderCards(filteredData);
+        }
+
+        function renderCards(customers) {
+            const list = document.getElementById('customerList');
+            document.getElementById('totalCust').innerText = customers.length;
+            list.innerHTML = "";
+
+            if (customers.length === 0) {
+                list.innerHTML = "<div style='text-align:center; color:#999; margin-top:20px;'>Keine Ergebnisse gefunden.</div>";
+                return;
+            }
+
+            customers.forEach((c) => {
+                const isGewerbe = (c.k_type === 'Gewerblich');
+                const card = document.createElement('div');
+                card.className = `customer-card ${selectedId === c.id ? 'selected' : ''}`;
+                
+                card.onclick = (e) => {
+                    e.stopPropagation();
+                    selectedId = (selectedId === c.id) ? null : c.id;
+                    applyFilters(); 
+                };
+                
+                card.ondblclick = () => openDetails(c);
+
+                card.innerHTML = `
+                    <div class="quick-actions">
+                        <button class="act-btn btn-edit" onclick="editCust('${c.id}')">Bearbeiten</button>
+                        <button class="act-btn btn-bill" onclick="sendToOperation('${c.id}')">Rechnung</button>
+                    </div>
+                    <div class="sec-left">
+                        <span class="type-icon">${isGewerbe ? '🏢' : '👤'}</span>
+                        <span style="font-weight:bold; font-size:13px;">${c.kundenId || `KD-${c.id.slice(-4)}`}</span><br>
+                        <small style="font-weight:normal; color:#999">${c.k_type || 'Privat'}</small>
+                    </div>
+                    <div class="sec-mid">
+                        <strong>${c.k_vorname || ''} ${c.k_nachname || ''}</strong>
+                        <span class="sub-text">${c.k_phone || '--'} | ${c.k_email || '--'}</span>
+                    </div>
+                    <div class="sec-address">
+                        ${c.k_street || '--'}<br>
+                        ${c.k_plz || ''} ${c.k_city || ''}
+                    </div>
+                    <div class="sec-tax">
+                        ${isGewerbe ? `Ust.Id: <b>${c.k_tax_id || '--'}</b>` : `<span style="color:#eee">Privat</span>`}
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function openDetails(c) {
+            document.getElementById('custOverlay').style.display = 'flex';
+            document.getElementById('detName').innerText = `${c.k_vorname} ${c.k_nachname}`;
+            const createdDate = c.createdAt ? new Date(c.createdAt).toLocaleDateString('de-DE') : '--';
+            const lastUpdate = c.lastUpdate ? new Date(c.lastUpdate).toLocaleDateString('de-DE') : '--';
+            document.getElementById('detContent').innerHTML = `
+                <div class="detail-row"><span class="detail-label">Kundentyp</span>${c.k_type || 'Privat'}</div>
+                <div class="detail-row"><span class="detail-label">Adresse</span>${c.k_street || '--'}, ${c.k_plz || ''} ${c.k_city || ''}, ${c.k_country || 'Deutschland'}</div>
+                <div class="detail-row"><span class="detail-label">Ausweis-Nr</span>${c.k_id_card || '--'}</div>
+                ${c.k_tax_id ? `<div class="detail-row"><span class="detail-label">Steuer-Nr / Ust.Id</span>${c.k_tax_id}</div>` : ''}
+                <div class="detail-row"><span class="detail-label">Erstellt am</span>${createdDate}</div>
+                ${c.lastUpdate ? `<div class="detail-row"><span class="detail-label">Letzte Änderung</span>${lastUpdate}</div>` : ''}
+            `;
+        }
+
+        function editCust(id) {
+            window.location.href = `index.html?edit=${id}&type=kunde`;
+        }
+
+        function sendToOperation(customerId) {
+            window.location.href = `operation.html?customer=${customerId}`;
+        }
+
+        function closeOverlay() { document.getElementById('custOverlay').style.display = 'none'; }
+        
+        window.onload = fetchCustomers;
     </script>
 </body>
 </html>
