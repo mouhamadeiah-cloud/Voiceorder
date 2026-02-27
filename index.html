@@ -521,5 +521,31 @@ Beispiel: {"id": "123", "menge": 2}
         window.addToOrder = addToOrder;
         window.removeFromOrder = removeFromOrder;
     </script>
+<script>
+// ===========================================
+// اختبار سريع - عرض القائمة على الشاشة
+// ===========================================
+async function showMenuOnScreen() {
+    try {
+        const snapshot = await db.collection('items').where('active', '==', true).get();
+        const items = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return data.displayName || data.name || 'بدون اسم';
+        });
+        
+        // عرض القائمة في recognizedText
+        document.getElementById('recognizedText').innerHTML = 
+            '<strong>📋 القائمة المحملة:</strong><br>' + 
+            items.join('<br>') + 
+            `<br><small>عدد الأطباق: ${items.length}</small>`;
+    } catch (error) {
+        document.getElementById('recognizedText').innerHTML = 
+            '❌ خطأ في تحميل القائمة: ' + error.message;
+    }
+}
+
+// شغل الاختبار بعد 3 ثواني
+setTimeout(showMenuOnScreen, 3000);
+</script>
 </body>
 </html>
