@@ -252,7 +252,7 @@
     <div class="header">
         <div class="container">
             <h1>🍽️ KI Bestellassistent</h1>
-            <div class="subtitle">Einfach sagen was Sie möchten - KI versteht alles</div>
+            <div class="subtitle">Einfach sagen was Sie möchten - Der Kellner versteht Sie</div>
         </div>
     </div>
     
@@ -277,7 +277,7 @@
             <button class="send-btn" id="sendOrderBtn">✅ Bestellung aufgeben</button>
         </div>
         
-        <!-- Menu Container (wird von Firebase geladen) -->
+        <!-- Menu Container -->
         <div id="menuContainer" class="loading">Menü wird geladen...</div>
     </div>
     
@@ -300,7 +300,7 @@
     
     <script>
         // ===========================================
-        // Firebase Config - HIER DEINE DATEN EINFÜGEN
+        // Firebase Config
         // ===========================================
         const firebaseConfig = {
             apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
@@ -316,9 +316,9 @@
         const db = firebase.firestore();
         
         // ===========================================
-        // GEMINI API - DEINEN KEY HIER EINFÜGEN
+        // GEMINI API - DEIN KEY HIER
         // ===========================================
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- DEIN ECHTER KEY
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- Dein echter Key
         
         // ===========================================
         // State
@@ -347,26 +347,13 @@
                 extras = extrasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 menuItems = itemsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                console.log('✅ Daten geladen:', {
-                    kategorien: categories.length,
-                    gerichte: menuItems.length,
-                    extras: extras.length
-                });
-                
-                // Zeige die geladenen Gerichte in der Konsole
-                console.log('📋 Gerichte:', menuItems.map(i => ({
-                    id: i.id,
-                    name: i.name,
-                    displayName: i.displayName,
-                    preis: i.price
-                })));
-                
+                console.log('✅ Daten geladen:', menuItems.length, 'Gerichte');
                 displayMenu();
                 
             } catch (error) {
-                console.error('❌ Fehler beim Laden:', error);
+                console.error('❌ Fehler:', error);
                 document.getElementById('menuContainer').innerHTML = 
-                    '<div class="empty-state">Fehler beim Laden des Menüs</div>';
+                    '<div class="empty-state">Fehler beim Laden</div>';
             }
         }
         
@@ -377,11 +364,10 @@
             const container = document.getElementById('menuContainer');
             
             if (menuItems.length === 0) {
-                container.innerHTML = '<div class="empty-state">Keine Gerichte verfügbar</div>';
+                container.innerHTML = '<div class="empty-state">Keine Gerichte</div>';
                 return;
             }
             
-            // Group by category
             const itemsByCategory = {};
             menuItems.forEach(item => {
                 const catId = item.categoryId || 'default';
@@ -390,8 +376,6 @@
             });
             
             let html = '';
-            
-            // Durchlaufe alle Kategorien
             categories.forEach(category => {
                 const catItems = itemsByCategory[category.id] || [];
                 if (catItems.length === 0) return;
@@ -399,13 +383,10 @@
                 html += `<div class="menu-section"><h2>${category.name}</h2>`;
                 
                 catItems.forEach(item => {
-                    // Hole die Extra-Namen für dieses Gericht
+                    const itemName = item.displayName || item.name || 'Unbekannt';
                     const itemExtras = (item.extras || [])
                         .map(id => extras.find(e => e.id === id)?.name)
                         .filter(e => e);
-                    
-                    // Stelle sicher, dass wir einen Namen haben
-                    const itemName = item.displayName || item.name || 'Unbekannt';
                     
                     html += `
                         <div class="menu-item">
@@ -413,20 +394,14 @@
                                 <span class="item-name">${itemName}</span>
                                 <span class="item-price">€${(item.price || 0).toFixed(2)}</span>
                             </div>
-                    `;
-                    
-                    if (itemExtras.length > 0) {
-                        html += `
-                            <div class="item-extras">
-                                <div class="extras-title">Zutaten:</div>
-                                <div class="extras-list">
-                                    ${itemExtras.map(e => `<span class="extra-tag">${e}</span>`).join('')}
+                            ${itemExtras.length ? `
+                                <div class="item-extras">
+                                    <div class="extras-title">Zutaten:</div>
+                                    <div class="extras-list">
+                                        ${itemExtras.map(e => `<span class="extra-tag">${e}</span>`).join('')}
+                                    </div>
                                 </div>
-                            </div>
-                        `;
-                    }
-                    
-                    html += `
+                            ` : ''}
                             <button class="add-btn" onclick="addToOrder('${item.id}')">+ Hinzufügen</button>
                         </div>
                     `;
@@ -439,67 +414,68 @@
         }
         
         // ===========================================
-        // GEMINI - Versteht die Bestellung
+        // GEMINI - Der intelligente Kellner 🎯
         // ===========================================
         async function understandWithGemini(text) {
-            if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('xxxxx')) {
-                console.warn('⚠️ Kein gültiger Gemini API Key');
+            if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('XXXXX')) {
+                console.warn('⚠️ Kein gültiger Gemini Key');
                 return [];
             }
             
             try {
-                // Erstelle eine Liste aller Gerichte mit ID und Name
+                // Nur die Namen der Gerichte (was der Gast sehen kann)
                 const menuList = menuItems.map(item => 
-                    `- ${item.displayName || item.name} (ID: ${item.id})`
+                    `- ${item.displayName || item.name}`
                 ).join('\n');
                 
                 const prompt = `
-Du bist ein KI-Assistent für ein Restaurant.
-Der Kunde sagt: "${text}"
+Du bist ein erfahrener Kellner in einem Restaurant.
+Der Gast sagt zu dir: "${text}"
 
-Verfügbare Gerichte:
+Das ist die Speisekarte:
 ${menuList}
 
-Aufgabe:
-1. Verstehe was der Kunde bestellen möchte
-2. Finde die passenden Gerichte aus der Liste
-3. Bestimme die Menge (falls nicht genannt, nimm 1)
+Deine Aufgabe als Kellner:
+1. Verstehe was der Gast bestellen möchte (auch wenn er die Namen falsch ausspricht)
+2. Finde das passendste Gericht aus der Speisekarte
+3. Bestimme die Menge (wenn nicht genannt, nimm 1)
+
+Beispiele:
+- Gast sagt "Spaghetti Eis" → Du verstehst "Spaghetti" (weil Eis nicht auf der Karte steht)
+- Gast sagt "Cookie Becher" → Du verstehst "Koockiesbecher" (weil es ähnlich ist)
+- Gast sagt "zweimal Nudeln" → Du verstehst "Spaghetti" mit Menge 2
 
 Antworte NUR mit einem JSON-Array:
-[{"id": "GERICHT_ID", "quantity": ZAHL}]
+[{"gericht": "GENAUER NAME VON DER KARTE", "menge": ZAHL}]
 
-Beispiel: Für "zweimal Pizza und einmal Cola" -> [{"id": "pizza123", "quantity": 2}, {"id": "cola456", "quantity": 1}]
-
-Wichtig: 
-- Verwende die exakten IDs aus der Liste
-- Kein anderer Text, nur JSON
+Wenn du nichts zuordnen kannst, antworte mit []
 `;
                 
-                console.log('🤖 Sende an Gemini:', text);
+                console.log('🤖 Kellner denkt nach...');
                 
                 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
                 
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
-                let jsonText = response.text();
+                const jsonText = response.text().replace(/```json|```/g, '').trim();
                 
-                // Bereinige die Antwort (entferne mögliche Markdown)
-                jsonText = jsonText.replace(/```json|```/g, '').trim();
-                
-                console.log('🤖 Gemini Antwort:', jsonText);
+                console.log('🤖 Kellner antwortet:', jsonText);
                 
                 const extracted = JSON.parse(jsonText);
                 
-                // Konvertiere zu unserem Format
+                // Finde die IDs zu den Gerichtenamen
                 const items = [];
                 for (const item of extracted) {
-                    const menuItem = menuItems.find(m => m.id === item.id);
+                    const menuItem = menuItems.find(m => 
+                        (m.displayName || m.name).toLowerCase() === item.gericht.toLowerCase()
+                    );
+                    
                     if (menuItem) {
                         items.push({
                             id: menuItem.id,
                             name: menuItem.displayName || menuItem.name,
-                            quantity: item.quantity || 1,
+                            quantity: item.menge || 1,
                             extras: (menuItem.extras || [])
                                 .map(id => extras.find(e => e.id === id)?.name)
                                 .filter(e => e)
@@ -507,27 +483,23 @@ Wichtig:
                     }
                 }
                 
-                console.log('✅ Gemini verstanden:', items);
                 return items;
                 
             } catch (error) {
-                console.error('❌ Gemini Fehler:', error);
+                console.error('❌ Kellner Fehler:', error);
                 return [];
             }
         }
         
         // ===========================================
-        // Process Order (Nur Gemini)
+        // Process Order
         // ===========================================
         async function processOrderText(text) {
-            if (text === lastProcessedText) {
-                console.log('⚠️ Text bereits verarbeitet');
-                return;
-            }
+            if (text === lastProcessedText) return;
             lastProcessedText = text;
             
             document.getElementById('recognizedText').innerHTML = 
-                `<span>🤖</span> "${text}"<br><small>KI analysiert...</small>`;
+                `<span>🤖</span> "${text}"<br><small>Kellner versteht...</small>`;
             
             const items = await understandWithGemini(text);
             
@@ -548,23 +520,17 @@ Wichtig:
         }
         
         // ===========================================
-        // Order Management (KORRIGIERT)
+        // Order Management
         // ===========================================
         function addToOrder(itemId, itemName, itemExtras) {
-            // Wenn itemName nicht übergeben wurde, suche es in menuItems
             if (!itemName) {
                 const item = menuItems.find(i => i.id === itemId);
-                if (!item) {
-                    console.error('❌ Item nicht gefunden:', itemId);
-                    return;
-                }
-                itemName = item.displayName || item.name || 'Unbekannt';
+                if (!item) return;
+                itemName = item.displayName || item.name;
                 itemExtras = (item.extras || [])
                     .map(id => extras.find(e => e.id === id)?.name)
                     .filter(e => e);
             }
-            
-            console.log('➕ Füge hinzu:', itemName);
             
             currentOrder.push({
                 id: itemId,
@@ -591,16 +557,13 @@ Wichtig:
                 
                 let html = '';
                 currentOrder.forEach((item, i) => {
-                    // Sicherstellen, dass wir einen Namen haben
-                    const itemName = item.name || 'Unbekannt';
-                    
-                    const extrasHtml = item.extras && item.extras.length ? 
+                    const extrasHtml = item.extras.length ? 
                         `<div class="order-item-extras">Mit: ${item.extras.join(', ')}</div>` : '';
                     
                     html += `
                         <div class="order-item">
                             <div class="order-item-info">
-                                <div class="order-item-name">${itemName}</div>
+                                <div class="order-item-name">${item.name}</div>
                                 ${extrasHtml}
                             </div>
                             <div class="order-item-actions">
@@ -618,54 +581,47 @@ Wichtig:
         }
         
         // ===========================================
-        // Send Order to Firebase
+        // Send Order
         // ===========================================
         async function sendOrder() {
             if (currentOrder.length === 0) {
-                alert("Keine Artikel in der Bestellung");
+                alert("Keine Artikel");
                 return;
             }
             
             try {
-                // Gruppiere gleiche Artikel
                 const grouped = {};
                 currentOrder.forEach(item => {
-                    const key = item.id;
-                    if (!grouped[key]) {
-                        grouped[key] = {
+                    if (!grouped[item.id]) {
+                        grouped[item.id] = {
                             name: item.name,
                             quantity: 1,
                             extras: item.extras
                         };
                     } else {
-                        grouped[key].quantity += 1;
+                        grouped[item.id].quantity += 1;
                     }
                 });
                 
-                const orderData = {
+                await db.collection('orders').add({
                     items: Object.values(grouped),
                     tableNumber: 1,
                     status: 'pending',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     orderNumber: Math.floor(Math.random() * 9000) + 1000
-                };
-                
-                console.log('📤 Sende Bestellung:', orderData);
-                
-                await db.collection('orders').add(orderData);
+                });
                 
                 currentOrder = [];
                 updateOrderDisplay();
                 document.getElementById('successModal').classList.add('active');
                 
             } catch (error) {
-                console.error('❌ Fehler:', error);
                 alert('Fehler: ' + error.message);
             }
         }
         
         // ===========================================
-        // Speech Recognition (KORRIGIERT)
+        // Speech Recognition
         // ===========================================
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         let recognition = null;
@@ -676,79 +632,47 @@ Wichtig:
             recognition.lang = 'de-DE';
             recognition.continuous = true;
             recognition.interimResults = true;
-            recognition.maxAlternatives = 1;
             
             recognition.onstart = function() {
                 isRecording = true;
                 micBtn.classList.add('recording');
-                document.getElementById('recognizedText').innerHTML = '🎤 Höre zu... Sprechen Sie jetzt';
-                console.log('🎤 Recording started');
+                document.getElementById('recognizedText').innerHTML = '🎤 Höre zu...';
             };
             
             recognition.onresult = function(event) {
-                let finalTranscript = '';
-                let interimTranscript = '';
+                let final = '', interim = '';
                 
                 for (let i = 0; i < event.results.length; i++) {
-                    const transcript = event.results[i][0].transcript;
                     if (event.results[i].isFinal) {
-                        finalTranscript += transcript;
-                        console.log('✅ Final:', transcript);
+                        final = event.results[i][0].transcript;
                     } else {
-                        interimTranscript += transcript;
-                        console.log('⏳ Interim:', transcript);
+                        interim += event.results[i][0].transcript;
                     }
                 }
                 
-                // Zeige Zwischenergebnisse sofort
-                if (interimTranscript) {
+                if (interim) {
                     document.getElementById('recognizedText').innerHTML = 
-                        `<span>🎤</span> "${interimTranscript}"<br><small>Sprechen Sie...</small>`;
+                        `<span>🎤</span> "${interim}"<br><small>Sprechen Sie...</small>`;
                 }
                 
-                // Verarbeite finale Ergebnisse
-                if (finalTranscript) {
-                    console.log('🎤 Final komplett:', finalTranscript);
+                if (final && final !== lastProcessedText) {
+                    lastProcessedText = final;
                     
-                    document.getElementById('recognizedText').innerHTML = 
-                        `<span>✅</span> "${finalTranscript}"<br><small>Verarbeite...</small>`;
-                    
-                    // Kleine Verzögerung für bessere UX
-                    setTimeout(() => {
-                        processOrderText(finalTranscript);
-                    }, 300);
+                    clearTimeout(processingTimeout);
+                    processingTimeout = setTimeout(() => processOrderText(final), 500);
                 }
             };
             
-            recognition.onerror = function(event) {
-                console.error('❌ Speech error:', event.error);
-                
-                let msg = 'Fehler beim Hören';
-                if (event.error === 'no-speech') msg = 'Keine Sprache erkannt';
-                else if (event.error === 'not-allowed') msg = 'Mikrofon nicht erlaubt';
-                
-                document.getElementById('recognizedText').innerHTML = `<span>❌</span> ${msg}`;
+            recognition.onerror = function() {
+                document.getElementById('recognizedText').innerHTML = '<span>❌</span> Fehler';
                 stopRecording();
             };
             
-            recognition.onend = function() {
-                console.log('🎤 Recording ended');
-                stopRecording();
-            };
-            
-        } else {
-            document.getElementById('recognizedText').innerHTML = 
-                '<span>❌</span> Keine Sprachunterstützung';
+            recognition.onend = stopRecording;
         }
         
         function startRecording() {
-            if (recognition && !isRecording) {
-                try {
-                    recognition.start();
-                } catch (e) {
-                    console.error('Start fehlgeschlagen:', e);
-                }
-            }
+            if (recognition && !isRecording) recognition.start();
         }
         
         function stopRecording() {
@@ -761,14 +685,13 @@ Wichtig:
         }
         
         // ===========================================
-        // Initialize
+        // Start
         // ===========================================
         loadMenuData();
         
         document.getElementById('micBtn').addEventListener('click', startRecording);
         document.getElementById('sendOrderBtn').addEventListener('click', sendOrder);
         
-        // Globale Funktionen
         window.addToOrder = addToOrder;
         window.removeFromOrder = removeFromOrder;
         window.closeModal = closeModal;
