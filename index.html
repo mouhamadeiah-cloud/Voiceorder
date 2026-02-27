@@ -147,6 +147,381 @@
         // ===========================================
         // 🔴 GEMINI KEY - ضع مفتاحك هنا
         // ===========================================
+        const GEMINI_API_KEY = "AIzaSyDFetuGDs8JqJpWw3XXXXXXXXXXXXX";
+        
+        // ===========================================
+        // 🔴 قائمة ثابتة مع IDs كنصوص
+        // ===========================================
+        const MENU_ITEMS = [
+            { id: "1", name: "Kookiesbecher" },
+            { id: "2", name: "Erdbeerbecher" },
+            { id: "3", name: "Spaghettieis" },
+            { id: "4", name: "Spagetti Erdbeer" },
+            { id: "5", name: "Spagetti kiwi" }
+        ];
+        
+        // ===========================================
+        // State
+        // ===========================================
+        let currentOrder = [];
+        
+        // عرض القائمة على الشاشة
+        const menuList = MENU_ITEMS.map(item => item.name).join('\n');
+        document.getElementById('recognizedText').innerHTML = 
+            '<strong>📋 القائمة:</strong><br>' + menuList;
+        
+        // ===========================================
+        // Gemini function
+        // ===========================================
+        async function askGemini(userText) {
+            try {
+                // Menu als Text für Gemini
+                const menuText = MENU_ITEMS.map(item => 
+                    `- ${item.name} (ID: ${item.id})`
+                ).join('\n');
+                
+                const prompt = `
+Du bist ein Kellner in "Die Primel Eiscafé".
+Der Gast sagt: "${userText}"
+
+SPEISEKARTE:
+${menuText}
+
+Finde das passendste Gericht.
+Bestimme die Menge (standardmäßig 1).
+
+Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
+`;
+
+                updateDebug("🤔 Gemini denkt nach...");
+                
+                const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const text = response.text();
+                
+                // Clean JSON
+                const jsonText = text.replace(/```json|```/g, '').trim();
+                console.log("🤖 Gemini:", jsonText);
+                
+                return JSON.parse(jsonText);
+                
+            } catch (error) {
+                console.error("❌ Gemini Fehler:", error);
+                updateDebug("❌ Gemini Fehler: " + error.message);
+                return null;
+            }
+        }
+        
+        // ===========================================
+        // Process Order - مع تصحيح IDs
+        // ===========================================
+        async function processOrder(text) {
+            updateDebug(`🔍 Suche nach: "${text}"`);
+            
+            const result = await askGemini(text);
+            
+            if (result && result.id) {
+                // 🔴 المشكلة هنا: Gemini قد يرجع ID كرقم أو نص
+                updateDebug(`🤖 Gemini sagt: ID=${result.id}, Menge=${result.menge}`);
+                
+                // 🔴 الحل: نحول الكل لنص للمقارنة
+                const item = MENU_ITEMS.find(i => String(i.id) === String(result.id));
+                
+                if (item) {
+                    updateDebug(`✅ Gefunden: ${item.name} (ID: ${item.id})`);
+                    
+                    for (let i = 0; i < (result.menge || 1); i++) {
+                        addToOrder(item.id, item.name);
+                    }
+                    
+                    document.getElementById('recognizedText').innerHTML = 
+                        `✅ "${text}"<br><small>${item.name} x${result.menge || 1}</small>`;
+                } else {
+                    updateDebug(`❌ Kein Item mit ID ${result.id} gefunden`);
+                    document.getElementById('recognizedText').innerHTML = 
+                        `❌ "${text}"<br><small>Gericht mit ID ${result.id} nicht gefunden</small>`;
+                    
+                    // عرض ال IDs المتاحة للمساعدة
+                    const availableIds = MENU_ITEMS.map(i => `${i.name} (${i.id})`).join(', ');
+                    updateDebug(`Verfügbare IDs: ${availableIds}`);
+                }
+            } else {
+                updateDebug(`❌ Gemini konnte kein Gericht zuordnen`);
+                document.getElementById('recognizedText').innerHTML = 
+                    `❌ "${text}"<br><small>Kein passendes Gericht</small>`;
+            }
+        }
+        
+        // ===========================================
+        // Debug Funktion
+        // ===========================================
+        function updateDebug(msg) {
+            document.getElementById('debugInfo').innerHTML = msg;
+            console.log(msg);
+        }
+        
+        // ===========================================
+        // Order Management
+        // ===========================================
+        function addToOrder(itemId, itemName) {
+            currentOrder.push({
+                id: itemId,
+                name: itemName,
+                orderId: Date.now() + Math.random()
+            });
+            updateOrderDisplay();
+        }
+        
+        function removeFromOrder(index) {
+            currentOrder.splice(index, 1);
+            updateOrderDisplay();
+        }
+        
+        function updateOrderDisplay() {
+            const section = document.getElementById('orderSection');
+            const list = document.getElementById('orderList');
+            const total = document.getElementById('totalItems');
+            
+            if (currentOrder.length > 0) {
+                section.style.display = 'block';
+                
+                let html = '';
+                currentOrder.forEach((item, i) => {
+                    html += `
+                        <div class="order-item">
+                            <span>${item.name}</span>
+                            <button class="delete-btn" onclick="removeFromOrder(${i})">✕</button>
+                        </div>
+                    `;
+                });
+                
+                list.innerHTML = html;
+                total.textContent = currentOrder.length;
+            } else {
+                section.style.display = 'none';
+            }
+        }
+        
+        // ===========================================
+        // Speech Recognition
+        // ===========================================
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isRecording = false;
+        
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'de-DE';
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            
+            recognition.onstart = function() {
+                isRecording = true;
+                micBtn.classList.add('recording');
+                document.getElementById('recognizedText').innerHTML = '🎤 Höre zu...';
+                updateDebug('🎤 Höre zu...');
+            };
+            
+            recognition.onresult = function(event) {
+                let finalText = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    if (event.results[i].isFinal) {
+                        finalText = event.results[i][0].transcript;
+                    }
+                }
+                
+                if (finalText) {
+                    processOrder(finalText);
+                }
+            };
+            
+            recognition.onerror = function() {
+                document.getElementById('recognizedText').innerHTML = '❌ Fehler beim Hören';
+                stopRecording();
+            };
+            
+            recognition.onend = stopRecording;
+        }
+        
+        function startRecording() {
+            if (recognition && !isRecording) recognition.start();
+        }
+        
+        function stopRecording() {
+            isRecording = false;
+            micBtn.classList.remove('recording');
+        }
+        
+        // ===========================================
+        // Event Listeners
+        // ===========================================
+        document.getElementById('micBtn').addEventListener('click', startRecording);
+        document.getElementById('sendOrderBtn').addEventListener('click', sendOrder);
+        
+        window.addToOrder = addToOrder;
+        window.removeFromOrder = removeFromOrder;
+        
+        // Send Order function
+        async function sendOrder() {
+            if (currentOrder.length === 0) return;
+            alert('✅ Bestellung aufgegeben!');
+            currentOrder = [];
+            updateOrderDisplay();
+        }
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍦 Die Primel Eiscafé - Bestellung</title>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { margin: 0; background: #f8f5f0; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+        
+        .header {
+            background: linear-gradient(135deg, #8B4513 0%, #CD853F 100%);
+            color: white;
+            padding: 24px 16px;
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 20px;
+        }
+        
+        h1 { margin: 0; font-size: 28px; }
+        
+        .voice-section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #8B4513;
+            border: none;
+            color: white;
+            font-size: 36px;
+            cursor: pointer;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .mic-button.recording {
+            background: #e53e3e;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        .recognized-text {
+            background: #f0f4ff;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            font-size: 18px;
+            min-height: 150px;
+            text-align: left;
+            white-space: pre-wrap;
+            direction: ltr;
+        }
+        
+        .order-items {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .delete-btn {
+            background: #feb2b2;
+            color: #c53030;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        .send-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 30px;
+            font-size: 18px;
+            width: 100%;
+            cursor: pointer;
+            margin-top: 16px;
+        }
+        
+        .debug-info {
+            background: #e2e8f0;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            margin-top: 10px;
+            color: #333;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>🍦 Die Primel Eiscafé</h1>
+            <div>Sagen Sie einfach, was Sie möchten</div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="voice-section">
+            <button class="mic-button" id="micBtn">🎤</button>
+            <p>Tippen Sie auf das Mikrofon und sprechen Sie</p>
+            <div class="recognized-text" id="recognizedText">
+                👆 Hier erscheint Ihre Bestellung
+            </div>
+            <div class="debug-info" id="debugInfo"></div>
+        </div>
+        
+        <div class="order-items" id="orderSection" style="display: none;">
+            <h3>📋 Ihre Bestellung</h3>
+            <div id="orderList"></div>
+            <div>Gesamt: <span id="totalItems">0</span> Artikel</div>
+            <button class="send-btn" id="sendOrderBtn">✅ Bestellung aufgeben</button>
+        </div>
+    </div>
+
+    <!-- Gemini API -->
+    <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
+    
+    <script>
+        // ===========================================
+        // 🔴 GEMINI KEY - ضع مفتاحك هنا
+        // ===========================================
         const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";
         
         // ===========================================
