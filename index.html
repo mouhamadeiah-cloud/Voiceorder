@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍽️ Bestellassistent - Gast</title>
+    <style>
+        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+        body { margin: 0; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 24px 16px;
+            border-radius: 0 0 30px 30px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        h1 { margin: 0; font-size: 28px; }
+        .subtitle { margin: 8px 0 0; opacity: 0.9; font-size: 16px; }
+        
+        .menu-section {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .menu-section h2 {
+            margin: 0 0 16px 0;
+            font-size: 20px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .menu-item {
+            padding: 16px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .menu-item:last-child { border-bottom: none; }
+        
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        
+        .item-name { font-weight: 600; color: #333; font-size: 18px; }
+        .item-price { color: #667eea; font-weight: 600; }
+        
+        .item-extras {
+            font-size: 14px;
+            color: #666;
+            margin: 8px 0;
+            padding: 8px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .extras-title {
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 4px;
+        }
+        
+        .extras-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        
+        .extra-tag {
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            color: #2d3748;
+        }
+        
+        .add-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            margin-top: 8px;
+        }
+        
+        .add-btn:hover { background: #5a67d8; }
+        
+        .voice-section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+        
+        .mic-button {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #667eea;
+            border: none;
+            color: white;
+            font-size: 36px;
+            cursor: pointer;
+            margin: 0 auto 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .mic-button.recording {
+            background: #e53e3e;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4); }
+            50% { transform: scale(1.1); box-shadow: 0 4px 25px rgba(229, 62, 62, 0.6); }
+            100% { transform: scale(1); box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4); }
+        }
+        
+        .recognized-text {
+            background: #f0f4ff;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
+            font-size: 18px;
+            min-height: 60px;
+            text-align: right;
+            direction: rtl;
+        }
+        
+        .recognized-text span { color: #667eea; font-weight: 600; }
+        
+        .order-items {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .order-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            margin-bottom: 8px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .order-item-info { flex: 1; }
+        .order-item-name { font-weight: 600; font-size: 16px; }
+        .order-item-extras { 
+            font-size: 13px; 
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        .delete-btn {
+            background: #feb2b2;
+            color: #c53030;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .send-btn {
+            background: #48bb78;
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 30px;
+            font-size: 18px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 16px;
+        }
+        
+        .send-btn:hover { background: #38a169; }
+        
+        .total-section {
+            background: #e2e8f0;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active { display: flex; }
+        
+        .modal-content {
+            background: white;
+            padding: 24px;
+            border-radius: 20px;
+            max-width: 300px;
+            text-align: center;
+        }
+        
+        .checkmark { font-size: 48px; color: #48bb78; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <h1>🍽️ Bestellassistent</h1>
+            <div class="subtitle">Sagen Sie einfach, was Sie möchten</div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Voice Input -->
+        <div class="voice-section">
+            <button class="mic-button" id="micBtn">🎤</button>
+            <p>Tippen Sie auf das Mikrofon und sagen Sie Ihre Bestellung</p>
+            <div class="recognized-text" id="recognizedText">
+                <span>👆</span> Hier erscheint Ihre Bestellung
+            </div>
+        </div>
+        
+        <!-- Current Order -->
+        <div class="order-items" id="orderSection" style="display: none;">
+            <h2 style="margin-top: 0;">📋 Ihre Bestellung</h2>
+            <div id="orderList"></div>
+            <div class="total-section" id="totalSection">
+                <span>Gesamt:</span>
+                <span id="totalItems">0 Artikel</span>
+            </div>
+            <button class="send-btn" id="sendOrderBtn">✅ Bestellung aufgeben</button>
+        </div>
+        
+        <!-- Menu Container -->
+        <div id="menuContainer"></div>
+    </div>
+    
+    <!-- Success Modal -->
+    <div class="modal" id="successModal">
+        <div class="modal-content">
+            <div class="checkmark">✅</div>
+            <h3>Bestellung aufgegeben!</h3>
+            <p>Ihre Bestellung wurde an die Küche gesendet.</p>
+            <button class="add-btn" onclick="closeModal()">OK</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Gemini API SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
+    
+    <script>
+        // ===========================================
+        // Firebase Config
+        // ===========================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
+            authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
+            databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "restaurantsysteme-eaff6",
+            storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
+            messagingSenderId: "891911663005",
+            appId: "1:891911663005:web:85672b40c90c158c2ad374"
+        };
+        
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        
+        // ===========================================
+        // State
+        // ===========================================
+        let menuItems = [];
+        let categories = [];
+        let extras = [];
+        let currentOrder = [];
+        let lastProcessedText = '';
+        let processingTimeout = null;
+        
+        // ===========================================
+        // Load Menu Data from Firebase
+        // ===========================================
+        async function loadMenuData() {
+            try {
+                // Load categories
+                const categoriesSnapshot = await db.collection('categories').get();
+                categories = categoriesSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                // Load extras
+                const extrasSnapshot = await db.collection('extras').get();
+                extras = extrasSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                // Load items
+                const itemsSnapshot = await db.collection('items').where('active', '==', true).get();
+                menuItems = itemsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                
+                console.log('✅ Daten geladen:', {
+                    kategorien: categories.length,
+                    gerichte: menuItems.length,
+                    extras: extras.length
+                });
+                
+                displayMenu();
+                
+            } catch (error) {
+                console.error('❌ Fehler beim Laden:', error);
+                document.getElementById('menuContainer').innerHTML = `
+                    <div class="menu-section">
+                        <div class="empty-state">Fehler beim Laden des Menüs</div>
+                    </div>
+                `;
+            }
+        }
+        
+        // ===========================================
+        // Display Menu
+        // ===========================================
+        function displayMenu() {
+            const container = document.getElementById('menuContainer');
+            
+            if (menuItems.length === 0) {
+                container.innerHTML = `
+                    <div class="menu-section">
+                        <div class="empty-state">Keine Gerichte verfügbar</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Group items by category
+            const itemsByCategory = {};
+            menuItems.forEach(item => {
+                const catId = item.categoryId || 'default';
+                if (!itemsByCategory[catId]) {
+                    itemsByCategory[catId] = [];
+                }
+                itemsByCategory[catId].push(item);
+            });
+            
+            let html = '';
+            
+            categories.forEach(category => {
+                const catItems = itemsByCategory[category.id] || [];
+                if (catItems.length === 0) return;
+                
+                html += `
+                    <div class="menu-section">
+                        <h2>${category.name}</h2>
+                `;
+                
+                catItems.forEach(item => {
+                    const itemExtras = (item.extras || [])
+                        .map(extraId => {
+                            const extra = extras.find(e => e.id === extraId);
+                            return extra ? extra.name : null;
+                        })
+                        .filter(e => e);
+                    
+                    html += `
+                        <div class="menu-item">
+                            <div class="item-header">
+                                <span class="item-name">${item.displayName || item.name}</span>
+                                <span class="item-price">€${(item.price || 0).toFixed(2)}</span>
+                            </div>
+                    `;
+                    
+                    if (itemExtras.length > 0) {
+                        html += `
+                            <div class="item-extras">
+                                <div class="extras-title">Zutaten:</div>
+                                <div class="extras-list">
+                                    ${itemExtras.map(e => `<span class="extra-tag">${e}</span>`).join('')}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    html += `
+                            <button class="add-btn" onclick="addToOrder('${item.id}')">+ Hinzufügen</button>
+                        </div>
+                    `;
+                });
+                
+                html += `</div>`;
+            });
+            
+            container.innerHTML = html;
+        }
+        
+        // ===========================================
+        // GEMINI API - DEIN API KEY
+        // ===========================================
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- HIER DEINEN ECHTEN KEY EINFÜGEN
+        
+        // ===========================================
+        // Extract order with Gemini AI (KORRIGIERT)
+        // ===========================================
+        async function extractOrderWithGemini(text) {
+            if (!GEMINI_API_KEY || GEMINI_API_KEY === "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU") {
+                console.warn("⚠️ Kein gültiger Gemini API Key - verwende einfache Filterung");
+                return extractOrderSimple(text);
+            }
+            
+            try {
+                // Prepare menu list for Gemini
+                const menuList = menuItems.map(item => item.name).join(', ');
+                
+                const prompt = `
+Du bist ein KI-Assistent für ein Restaurant. 
+Der Kunde sagt: "${text}"
+Verfügbare Gerichte: ${menuList}
+
+Extrahiere die Bestellung. Gib NUR ein JSON-Array zurück, mit diesem Format:
+[{"item": "Gerichtsname", "quantity": zahl}]
+
+Beispiel: Für "zweimal Pizza und einmal Cola" -> [{"item": "Pizza", "quantity": 2}, {"item": "Cola", "quantity": 1}]
+
+Wichtig: 
+- Verwende exakt die Gerichtenamen aus der Liste
+- Wenn keine Menge genannt wird, nimm 1
+- Antworte NUR mit dem JSON, kein anderer Text
+`;
+                
+                // >>> KORREKT: Hier den API Key verwenden <<<
+                const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const jsonText = response.text();
+                
+                // Clean JSON (remove markdown if present)
+                const cleanJson = jsonText.replace(/```json|```/g, '').trim();
+                const extracted = JSON.parse(cleanJson);
+                
+                // Convert to our format
+                const pairs = [];
+                extracted.forEach(item => {
+                    const menuItem = menuItems.find(m => 
+                        m.name.toLowerCase().includes(item.item.toLowerCase())
+                    );
+                    if (menuItem) {
+                        pairs.push({
+                            id: menuItem.id,
+                            name: menuItem.name,
+                            displayName: menuItem.displayName || menuItem.name,
+                            extras: menuItem.extras || [],
+                            quantity: item.quantity || 1
+                        });
+                    }
+                });
+                
+                console.log('🤖 Gemini erkannt:', pairs);
+                return pairs;
+                
+            } catch (error) {
+                console.error('❌ Gemini Fehler:', error);
+                // Fallback to simple filtering
+                return extractOrderSimple(text);
+            }
+        }
+        
+        // ===========================================
+        // Simple fallback extraction (if Gemini fails)
+        // ===========================================
+        function extractOrderSimple(text) {
+            text = text.toLowerCase().replace(/[.,!?;:]/g, '');
+            let words = text.split(/\s+/);
+            
+            // Simple quantity words
+            const quantityWords = {
+                'einmal': 1, 'ein': 1, 'eine': 1, 'einen': 1, 'eins': 1,
+                'zweimal': 2, 'zwei': 2,
+                'dreimal': 3, 'drei': 3,
+                'viermal': 4, 'vier': 4,
+                'fünfmal': 5, 'fünf': 5
+            };
+            
+            let pairs = [];
+            let currentQuantity = 1;
+            
+            for (let word of words) {
+                // Check for quantity word
+                if (quantityWords[word]) {
+                    currentQuantity = quantityWords[word];
+                    continue;
+                }
+                
+                // Check for menu item
+                for (let item of menuItems) {
+                    if (item.keywords && item.keywords.includes(word)) {
+                        pairs.push({
+                            id: item.id,
+                            name: item.name,
+                            displayName: item.displayName || item.name,
+                            extras: item.extras || [],
+                            quantity: currentQuantity
+                        });
+                        currentQuantity = 1;
+                        break;
+                    }
+                }
+            }
+            
+            return pairs;
+        }
+        
+        // ===========================================
+        // Process Order Text
+        // ===========================================
+        async function processOrderText(text) {
+            if (text === lastProcessedText) return;
+            lastProcessedText = text;
+            
+            document.getElementById('recognizedText').innerHTML = 
+                `<span>🤖</span> "${text}"<br><small>Analysiere mit KI...</small>`;
+            
+            // Use Gemini to extract order
+            let pairs = await extractOrderWithGemini(text);
+            
+            if (pairs.length > 0) {
+                pairs.forEach(pair => {
+                    for (let i = 0; i < pair.quantity; i++) {
+                        addToOrder(pair.id);
+                    }
+                });
+                
+                let foundText = pairs.map(p => p.displayName + ' (x' + p.quantity + ')').join(', ');
+                document.getElementById('recognizedText').innerHTML = 
+                    `<span>✅</span> "${text}"<br><small>Gefunden: ${foundText}</small>`;
+            } else {
+                document.getElementById('recognizedText').innerHTML = 
+                    `<span>❌</span> "${text}"<br><small>Keine Gerichte erkannt</small>`;
+            }
+        }
+        
+        // ===========================================
+        // Order Management
+        // ===========================================
+        function addToOrder(itemId) {
+            const item = menuItems.find(i => i.id === itemId);
+            if (!item) return;
+            
+            const itemExtras = (item.extras || [])
+                .map(extraId => {
+                    const extra = extras.find(e => e.id === extraId);
+                    return extra ? extra.name : null;
+                })
+                .filter(e => e);
+            
+            currentOrder.push({
+                id: item.id,
+                displayName: item.displayName || item.name,
+                extras: itemExtras,
+                orderId: Date.now() + Math.random()
+            });
+            
+            updateOrderDisplay();
+        }
+        
+        function removeFromOrder(index) {
+            currentOrder.splice(index, 1);
+            updateOrderDisplay();
+        }
+        
+        function updateOrderDisplay() {
+            const orderSection = document.getElementById('orderSection');
+            const orderList = document.getElementById('orderList');
+            const totalItems = document.getElementById('totalItems');
+            
+            if (currentOrder.length > 0) {
+                orderSection.style.display = 'block';
+                
+                let html = '';
+                currentOrder.forEach((item, index) => {
+                    let extrasHtml = '';
+                    if (item.extras && item.extras.length > 0) {
+                        extrasHtml = `<div class="order-item-extras">Mit: ${item.extras.join(', ')}</div>`;
+                    }
+                    
+                    html += `
+                        <div class="order-item">
+                            <div class="order-item-info">
+                                <div class="order-item-name">${item.displayName}</div>
+                                ${extrasHtml}
+                            </div>
+                            <div class="order-item-actions">
+                                <button class="delete-btn" onclick="removeFromOrder(${index})">✕</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                orderList.innerHTML = html;
+                totalItems.textContent = currentOrder.length + ' Artikel';
+            } else {
+                orderSection.style.display = 'none';
+            }
+        }
+        
+        // ===========================================
+        // Send Order
+        // ===========================================
+        async function sendOrder() {
+            if (currentOrder.length === 0) {
+                alert("Keine Artikel in der Bestellung");
+                return;
+            }
+            
+            try {
+                // Group similar items
+                let grouped = {};
+                currentOrder.forEach(item => {
+                    if (!grouped[item.id]) {
+                        grouped[item.id] = {
+                            name: item.displayName,
+                            quantity: 1,
+                            extras: item.extras
+                        };
+                    } else {
+                        grouped[item.id].quantity += 1;
+                    }
+                });
+                
+                await db.collection('orders').add({
+                    items: Object.values(grouped),
+                    tableNumber: 1,
+                    status: 'pending',
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    orderNumber: Math.floor(Math.random() * 9000) + 1000,
+                    totalItems: currentOrder.length
+                });
+                
+                currentOrder = [];
+                updateOrderDisplay();
+                document.getElementById('successModal').classList.add('active');
+                
+            } catch (error) {
+                console.error('❌ Fehler:', error);
+                alert('Fehler: ' + error.message);
+            }
+        }
+        
+        // ===========================================
+        // Speech Recognition
+        // ===========================================
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let recognition = null;
+        let isRecording = false;
+        
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'de-DE';
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            
+            recognition.onstart = function() {
+                isRecording = true;
+                micBtn.classList.add('recording');
+                document.getElementById('recognizedText').innerHTML = '🎤 Höre zu...';
+                lastProcessedText = '';
+            };
+            
+            recognition.onresult = function(event) {
+                let finalTranscript = '';
+                let interimTranscript = '';
+                
+                for (let i = 0; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    if (result.isFinal) {
+                        finalTranscript = result[0].transcript;
+                    } else {
+                        interimTranscript += result[0].transcript;
+                    }
+                }
+                
+                if (interimTranscript) {
+                    document.getElementById('recognizedText').innerHTML = 
+                        `<span>🎤</span> "${interimTranscript}"<br><small>Höre zu...</small>`;
+                }
+                
+                if (finalTranscript && finalTranscript !== lastProcessedText) {
+                    lastProcessedText = finalTranscript;
+                    
+                    if (processingTimeout) {
+                        clearTimeout(processingTimeout);
+                    }
+                    
+                    processingTimeout = setTimeout(() => {
+                        processOrderText(finalTranscript);
+                        processingTimeout = null;
+                    }, 500);
+                }
+            };
+            
+            recognition.onerror = function() {
+                document.getElementById('recognizedText').innerHTML = 
+                    '<span>❌</span> Fehler beim Hören';
+                stopRecording();
+            };
+            
+            recognition.onend = function() {
+                stopRecording();
+            };
+        } else {
+            document.getElementById('recognizedText').innerHTML = 
+                '<span>❌</span> Ihr Browser unterstützt keine Spracheingabe';
+        }
+        
+        function startRecording() {
+            if (recognition && !isRecording) {
+                recognition.start();
+            }
+        }
+        
+        function stopRecording() {
+            isRecording = false;
+            micBtn.classList.remove('recording');
+        }
+        
+        function closeModal() {
+            document.getElementById('successModal').classList.remove('active');
+        }
+        
+        // ===========================================
+        // Initialize
+        // ===========================================
+        loadMenuData();
+        
+        // Event Listeners
+        document.getElementById('micBtn').addEventListener('click', startRecording);
+        document.getElementById('sendOrderBtn').addEventListener('click', sendOrder);
+        
+        // Global functions
+        window.addToOrder = addToOrder;
+        window.removeFromOrder = removeFromOrder;
+        window.closeModal = closeModal;
+    </script>
+</body>
+</html>
