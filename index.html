@@ -60,6 +60,7 @@
             margin: 16px 0;
             font-size: 18px;
             min-height: 80px;
+            text-align: center;
         }
         
         .order-items {
@@ -108,6 +109,17 @@
             margin: 16px 0;
             border: 1px solid #fcc;
         }
+        
+        .status-badge {
+            background: #e2e8f0;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            display: inline-block;
+            margin-bottom: 10px;
+        }
+        .status-badge.success { background: #c6f6d5; color: #22543d; }
+        .status-badge.error { background: #fed7d7; color: #742a2a; }
     </style>
 </head>
 <body>
@@ -120,6 +132,7 @@
     
     <div class="container">
         <div class="voice-section">
+            <div id="geminiStatus" class="status-badge">⏳ Lade Gemini...</div>
             <button class="mic-button" id="micBtn">🎤</button>
             <p>Tippen Sie auf das Mikrofon und sprechen Sie</p>
             <div class="recognized-text" id="recognizedText">
@@ -138,16 +151,81 @@
         </div>
     </div>
 
-    <!-- Firebase & Gemini -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
     
+    <!-- Gemini API - مع محاولتين للتحميل -->
+    <script>
+    window.GEMINI_LOADED = false;
+    window.GEMINI_ERROR = null;
+    
+    function updateGeminiStatus(status, isError = false) {
+        const el = document.getElementById('geminiStatus');
+        if (el) {
+            el.textContent = status;
+            el.className = 'status-badge ' + (isError ? 'error' : 'success');
+        }
+    }
+    
+    function loadGeminiFromCDN() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js';
+            script.onload = () => {
+                console.log('✅ Gemini geladen von CDN');
+                window.GEMINI_LOADED = true;
+                updateGeminiStatus('✅ Gemini bereit');
+                resolve();
+            };
+            script.onerror = () => {
+                console.log('❌ CDN fehlgeschlagen, versuche Backup...');
+                reject();
+            };
+            document.head.appendChild(script);
+        });
+    }
+    
+    function loadGeminiBackup() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = 'https://unpkg.com/@google/generative-ai@latest/dist/index.min.js';
+            script.onload = () => {
+                console.log('✅ Gemini geladen von Backup');
+                window.GEMINI_LOADED = true;
+                updateGeminiStatus('✅ Gemini bereit');
+                resolve();
+            };
+            script.onerror = () => {
+                console.log('❌ Backup auch fehlgeschlagen');
+                window.GEMINI_ERROR = 'Gemini konnte nicht geladen werden';
+                updateGeminiStatus('❌ Gemini nicht verfügbar', true);
+                reject();
+            };
+            document.head.appendChild(script);
+        });
+    }
+    
+    // Versuche zu laden
+    (async function initGemini() {
+        try {
+            await loadGeminiFromCDN();
+        } catch {
+            try {
+                await loadGeminiBackup();
+            } catch {
+                // Beide fehlgeschlagen
+            }
+        }
+    })();
+    </script>
+    
+    <!-- Hauptscript -->
     <script>
         // ===========================================
         // 🔴 CONFIGURATION
         // ===========================================
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU"; // 🔴 Dein Key
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU"; // 🔴 Dein Key hier
         
         const firebaseConfig = {
             apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
@@ -169,11 +247,23 @@
         let menuLoaded = false;
         
         // ===========================================
-        // Load Menu from Firebase FIRST
+        // Helper Functions
+        // ===========================================
+        function showError(msg) {
+            const errorDiv = document.getElementById('errorDisplay');
+            errorDiv.style.display = 'block';
+            errorDiv.innerHTML = `<div class="error-message">❌ ${msg}</div>`;
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // ===========================================
+        // Load Menu from Firebase
         // ===========================================
         async function loadMenuFromFirebase() {
             try {
-                console.log("📥 Lade Gerichte von Firebase...");
+                console.log("📥 Lade Gerichte...");
                 const snapshot = await db.collection('items').where('active', '==', true).get();
                 menuItems = snapshot.docs.map(doc => ({
                     id: doc.id,
@@ -182,35 +272,36 @@
                 }));
                 
                 menuLoaded = true;
-                console.log(`✅ ${menuItems.length} Gerichte geladen:`, menuItems);
+                console.log(`✅ ${menuItems.length} Gerichte geladen`);
                 return true;
             } catch (error) {
                 console.error("❌ Firebase Fehler:", error);
-                showError("Fehler beim Laden der Speisekarte: " + error.message);
+                showError("Fehler beim Laden der Speisekarte");
                 return false;
             }
         }
         
         // ===========================================
-        // Show error on screen
-        // ===========================================
-        function showError(msg) {
-            const errorDiv = document.getElementById('errorDisplay');
-            errorDiv.style.display = 'block';
-            errorDiv.innerHTML = `<div class="error-message">❌ ${msg}</div>`;
-        }
-        
-        // ===========================================
-        // Gemini function - gets menu directly
+        // Gemini function
         // ===========================================
         async function askGemini(userText) {
+            // Prüfe ob Gemini geladen ist
+            if (!window.GEMINI_LOADED) {
+                if (window.GEMINI_ERROR) {
+                    showError("Gemini nicht verfügbar: " + window.GEMINI_ERROR);
+                } else {
+                    showError("Gemini wird noch geladen...");
+                }
+                return null;
+            }
+            
             if (!menuLoaded) {
                 showError("Speisekarte wird noch geladen...");
                 return null;
             }
             
             try {
-                // Create a clean menu list for Gemini
+                // Menu als Text für Gemini
                 const menuList = menuItems.map(item => 
                     `- ${item.name} (ID: ${item.id})`
                 ).join('\n');
@@ -222,21 +313,15 @@ Der Gast sagt: "${userText}"
 SPEISEKARTE:
 ${menuList}
 
-Aufgabe:
-1. Finde das passendste Gericht aus der Speisekarte
-2. Bestimme die Menge (wenn nicht genannt, nimm 1)
+Finde das passendste Gericht.
+Bestimme die Menge (standardmäßig 1).
 
 Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
 
-Beispiele:
-- "einmal Spaghetti" → {"id": "spaghetti-id", "menge": 1}
-- "zweimal Cola" → {"id": "cola-id", "menge": 2}
-- "Spagetti mit Eis" → finde ähnlichstes Gericht
-
-Wenn du kein passendes Gericht findest: {"id": null, "menge": 0}
+Beispiel: {"id": "123", "menge": 2}
 `;
 
-                console.log("🤖 Sende an Gemini mit", menuItems.length, "Gerichten");
+                console.log("🤖 Sende an Gemini...");
                 
                 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -247,7 +332,7 @@ Wenn du kein passendes Gericht findest: {"id": null, "menge": 0}
                 
                 // Clean JSON
                 const jsonText = text.replace(/```json|```/g, '').trim();
-                console.log("🤖 Gemini antwortet:", jsonText);
+                console.log("🤖 Antwort:", jsonText);
                 
                 return JSON.parse(jsonText);
                 
@@ -262,7 +347,7 @@ Wenn du kein passendes Gericht findest: {"id": null, "menge": 0}
         // Process Order
         // ===========================================
         async function processOrder(text) {
-            document.getElementById('recognizedText').innerHTML = `🤔 "${text}"<br><small>Denke nach...</small>`;
+            document.getElementById('recognizedText').innerHTML = `🤔 "${text}"<br><small>Suche passendes Gericht...</small>`;
             
             const result = await askGemini(text);
             
@@ -276,11 +361,11 @@ Wenn du kein passendes Gericht findest: {"id": null, "menge": 0}
                         `✅ "${text}"<br><small>${item.name} x${result.menge || 1}</small>`;
                 } else {
                     document.getElementById('recognizedText').innerHTML = 
-                        `❓ "${text}"<br><small>Gericht nicht gefunden</small>`;
+                        `❌ "${text}"<br><small>Gericht nicht in der Datenbank</small>`;
                 }
             } else {
                 document.getElementById('recognizedText').innerHTML = 
-                    `❌ "${text}"<br><small>Kein passendes Gericht</small>`;
+                    `❌ "${text}"<br><small>Kein passendes Gericht gefunden</small>`;
             }
         }
         
@@ -327,6 +412,34 @@ Wenn du kein passendes Gericht findest: {"id": null, "menge": 0}
         }
         
         // ===========================================
+        // Send Order
+        // ===========================================
+        async function sendOrder() {
+            if (currentOrder.length === 0) return;
+            
+            const grouped = {};
+            currentOrder.forEach(item => {
+                if (!grouped[item.id]) {
+                    grouped[item.id] = { name: item.name, quantity: 1 };
+                } else {
+                    grouped[item.id].quantity += 1;
+                }
+            });
+            
+            await db.collection('orders').add({
+                items: Object.values(grouped),
+                tableNumber: 1,
+                status: 'pending',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                orderNumber: Math.floor(Math.random() * 9000) + 1000
+            });
+            
+            currentOrder = [];
+            updateOrderDisplay();
+            alert('✅ Bestellung aufgegeben!');
+        }
+        
+        // ===========================================
         // Speech Recognition
         // ===========================================
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -364,11 +477,17 @@ Wenn du kein passendes Gericht findest: {"id": null, "menge": 0}
             };
             
             recognition.onend = stopRecording;
+        } else {
+            document.getElementById('recognizedText').innerHTML = '❌ Sprachunterstützung nicht verfügbar';
         }
         
         function startRecording() {
             if (!menuLoaded) {
-                showError("Bitte warten, Speisekarte wird geladen...");
+                showError("Speisekarte wird noch geladen...");
+                return;
+            }
+            if (!window.GEMINI_LOADED) {
+                showError("Gemini wird noch geladen...");
                 return;
             }
             if (recognition && !isRecording) recognition.start();
@@ -380,14 +499,12 @@ Wenn du kein passendes Gericht findest: {"id": null, "menge": 0}
         }
         
         // ===========================================
-        // Initialize - Load menu first!
+        // Initialize
         // ===========================================
         async function init() {
             document.getElementById('recognizedText').innerHTML = '⏳ Lade Speisekarte...';
-            const success = await loadMenuFromFirebase();
-            if (success) {
-                document.getElementById('recognizedText').innerHTML = '👆 Bereit! Tippen Sie auf das Mikrofon';
-            }
+            await loadMenuFromFirebase();
+            document.getElementById('recognizedText').innerHTML = '👆 Bereit! Tippen Sie auf das Mikrofon';
         }
         
         init();
@@ -398,31 +515,6 @@ Wenn du kein passendes Gericht findest: {"id": null, "menge": 0}
         
         window.addToOrder = addToOrder;
         window.removeFromOrder = removeFromOrder;
-        
-        async function sendOrder() {
-            if (currentOrder.length === 0) return;
-            
-            const grouped = {};
-            currentOrder.forEach(item => {
-                if (!grouped[item.id]) {
-                    grouped[item.id] = { name: item.name, quantity: 1 };
-                } else {
-                    grouped[item.id].quantity += 1;
-                }
-            });
-            
-            await db.collection('orders').add({
-                items: Object.values(grouped),
-                tableNumber: 1,
-                status: 'pending',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                orderNumber: Math.floor(Math.random() * 9000) + 1000
-            });
-            
-            currentOrder = [];
-            updateOrderDisplay();
-            alert('✅ Bestellung aufgegeben!');
-        }
     </script>
 </body>
 </html>
