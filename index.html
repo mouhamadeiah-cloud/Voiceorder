@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎤 KI Bestellassistent - Gast</title>
+    <title>🍽️ KI Bestellassistent</title>
     <style>
         * { box-sizing: border-box; font-family: system-ui, sans-serif; }
         body { margin: 0; background: #f5f5f5; }
@@ -17,18 +17,27 @@
             margin-bottom: 20px;
         }
         
-        h1 { margin: 0; }
+        h1 { margin: 0; font-size: 28px; }
+        
+        .voice-section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
         
         .mic-button {
-            width: 120px;
-            height: 120px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             background: #667eea;
             border: none;
             color: white;
-            font-size: 48px;
+            font-size: 36px;
             cursor: pointer;
-            margin: 20px auto;
+            margin: 0 auto 16px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -46,27 +55,31 @@
             100% { transform: scale(1); }
         }
         
-        .status {
-            text-align: center;
-            padding: 20px;
+        .recognized-text {
+            background: #f0f4ff;
+            padding: 16px;
+            border-radius: 12px;
+            margin: 16px 0;
             font-size: 18px;
-            color: #667eea;
+            min-height: 60px;
         }
         
         .order-items {
             background: white;
             border-radius: 20px;
             padding: 16px;
-            margin: 20px 0;
+            margin-bottom: 20px;
         }
         
         .order-item {
             display: flex;
             justify-content: space-between;
+            align-items: center;
             padding: 12px;
             background: #f8f9fa;
             border-radius: 12px;
             margin-bottom: 8px;
+            border-left: 4px solid #667eea;
         }
         
         .delete-btn {
@@ -114,33 +127,55 @@
             border-radius: 25px;
             cursor: pointer;
         }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+        
+        .total-section {
+            background: #e2e8f0;
+            padding: 16px;
+            border-radius: 12px;
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: 600;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="container">
-            <h1>🎤 KI Bestellassistent</h1>
-            <div>Sagen Sie einfach was Sie möchten</div>
+            <h1>🍽️ KI Bestellassistent</h1>
+            <div class="subtitle">Sagen Sie einfach, was Sie möchten</div>
         </div>
     </div>
     
     <div class="container">
-        <!-- Voice Button -->
-        <div style="text-align: center;">
+        <!-- Voice Input -->
+        <div class="voice-section">
             <button class="mic-button" id="micBtn">🎤</button>
-            <div class="status" id="status">Bereit zum Zuhören</div>
+            <p>Drücken und halten - Sprechen - Loslassen</p>
+            <div class="recognized-text" id="recognizedText">
+                <span>👆</span> Hier erscheint Ihre Bestellung
+            </div>
         </div>
         
         <!-- Current Order -->
         <div class="order-items" id="orderSection" style="display: none;">
             <h3>📋 Ihre Bestellung</h3>
             <div id="orderList"></div>
-            <div>Gesamt: <span id="totalItems">0</span> Artikel</div>
+            <div class="total-section">
+                <span>Gesamt:</span>
+                <span id="totalItems">0 Artikel</span>
+            </div>
             <button class="send-btn" id="sendOrderBtn">✅ Bestellung aufgeben</button>
         </div>
         
         <!-- Menu -->
-        <div id="menuContainer">Menü wird geladen...</div>
+        <div id="menuContainer" class="loading">Menü wird geladen...</div>
     </div>
 
     <!-- Firebase & Gemini -->
@@ -149,7 +184,9 @@
     <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
     
     <script>
+        // ===========================================
         // Firebase Config
+        // ===========================================
         const firebaseConfig = {
             apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
             authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
@@ -162,21 +199,31 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // Gemini Key
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- DEIN KEY
+        // ===========================================
+        // GEMINI API - DEIN KEY HIER
+        // ===========================================
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- Dein echter Key!
         
+        // ===========================================
+        // State
+        // ===========================================
         let menuItems = [];
         let currentOrder = [];
-        let mediaRecorder = null;
-        let audioChunks = [];
+        let recognition = null;
+        let isRecording = false;
         
         // ===========================================
         // Load Menu
         // ===========================================
         async function loadMenu() {
-            const snapshot = await db.collection('items').where('active', '==', true).get();
-            menuItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            displayMenu();
+            try {
+                const snapshot = await db.collection('items').where('active', '==', true).get();
+                menuItems = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                displayMenu();
+                console.log('✅ Menü geladen:', menuItems);
+            } catch (error) {
+                console.error('❌ Fehler:', error);
+            }
         }
         
         function displayMenu() {
@@ -184,11 +231,14 @@
             let html = '<div class="menu-section"><h3>🍽️ Speisekarte</h3>';
             
             menuItems.forEach(item => {
+                const name = item.displayName || item.name || 'Unbekannt';
+                const price = item.price || 0;
+                
                 html += `
                     <div class="menu-item">
                         <div>
-                            <strong>${item.displayName || item.name}</strong><br>
-                            €${(item.price || 0).toFixed(2)}
+                            <strong>${name}</strong><br>
+                            €${price.toFixed(2)}
                         </div>
                         <button class="add-btn" onclick="addToOrder('${item.id}')">+</button>
                     </div>
@@ -199,120 +249,102 @@
         }
         
         // ===========================================
-        // Audio Recording & Gemini
+        // Speech Recognition (funktioniert!)
         // ===========================================
-        async function startRecording() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        
+        if (SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'de-DE';
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            
+            recognition.onstart = function() {
+                isRecording = true;
+                micBtn.classList.add('recording');
+                document.getElementById('recognizedText').innerHTML = '🎤 Höre zu... Sprechen Sie jetzt';
+            };
+            
+            recognition.onresult = function(event) {
+                let transcript = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    transcript += event.results[i][0].transcript;
+                }
                 
-                mediaRecorder.ondataavailable = event => {
-                    audioChunks.push(event.data);
-                };
+                document.getElementById('recognizedText').innerHTML = 
+                    `<span>🎤</span> "${transcript}"<br><small>Verarbeite...</small>`;
                 
-                mediaRecorder.onstop = async () => {
-                    document.getElementById('status').innerHTML = '🎤 KI hört zu...';
-                    
-                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-                    await sendToGemini(audioBlob);
-                    
-                    stream.getTracks().forEach(track => track.stop());
-                };
-                
-                mediaRecorder.start();
-                document.getElementById('micBtn').classList.add('recording');
-                document.getElementById('status').innerHTML = '🎤 Sprechen Sie jetzt...';
-                
-                // Automatisch nach 5 Sekunden stoppen
-                setTimeout(() => {
-                    if (mediaRecorder && mediaRecorder.state === 'recording') {
-                        stopRecording();
-                    }
-                }, 5000);
-                
-            } catch (error) {
-                console.error('Mikrofon Fehler:', error);
-                document.getElementById('status').innerHTML = '❌ Mikrofon nicht verfügbar';
-            }
+                // Sende an Gemini
+                understandWithGemini(transcript);
+            };
+            
+            recognition.onerror = function(event) {
+                console.error('Fehler:', event.error);
+                document.getElementById('recognizedText').innerHTML = '❌ Fehler beim Hören';
+                stopRecording();
+            };
+            
+            recognition.onend = function() {
+                stopRecording();
+            };
         }
         
-        function stopRecording() {
-            if (mediaRecorder && mediaRecorder.state === 'recording') {
-                mediaRecorder.stop();
-                document.getElementById('micBtn').classList.remove('recording');
+        // ===========================================
+        // Gemini versteht den Text
+        // ===========================================
+        async function understandWithGemini(text) {
+            if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('XXXXX')) {
+                console.warn('⚠️ Kein gültiger Gemini Key');
+                return;
             }
-        }
-        
-        async function sendToGemini(audioBlob) {
+            
             try {
-                // Konvertiere Audio zu Base64
-                const reader = new FileReader();
-                reader.readAsDataURL(audioBlob);
-                reader.onloadend = async function() {
-                    const base64Audio = reader.result.split(',')[1];
-                    
-                    // Erstelle die Liste der Gerichte
-                    const menuList = menuItems.map(item => 
-                        `- ${item.displayName || item.name}`
-                    ).join('\n');
-                    
-                    // Prompt für Gemini
-                    const prompt = `
-Du bist ein Kellner. Der Gast spricht mit dir.
-Höre genau zu und verstehe was er bestellen möchte.
+                const menuList = menuItems.map(item => 
+                    `- ${item.displayName || item.name}`
+                ).join('\n');
+                
+                const prompt = `
+Du bist ein Kellner. Der Gast sagt: "${text}"
 
-Verfügbare Gerichte:
+Speisekarte:
 ${menuList}
 
-Antworte NUR mit einem JSON-Array:
+Verstehe die Bestellung. Antworte NUR mit JSON:
 [{"gericht": "GENAUER NAME", "menge": ZAHL}]
 
-Beispiel: Für "zweimal Pizza" -> [{"gericht": "Pizza", "menge": 2}]
+Beispiel: [{"gericht": "Spaghetti", "menge": 2}]
 `;
+                
+                const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
+                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+                
+                const result = await model.generateContent(prompt);
+                const response = await result.response;
+                const jsonText = response.text().replace(/```json|```/g, '').trim();
+                
+                const items = JSON.parse(jsonText);
+                
+                items.forEach(item => {
+                    const menuItem = menuItems.find(m => 
+                        (m.displayName || m.name).toLowerCase().includes(item.gericht.toLowerCase())
+                    );
                     
-                    // Sende Audio an Gemini
-                    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-                    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                    
-                    const result = await model.generateContent([
-                        prompt,
-                        {
-                            inlineData: {
-                                mimeType: "audio/webm",
-                                data: base64Audio
-                            }
+                    if (menuItem) {
+                        for (let i = 0; i < (item.menge || 1); i++) {
+                            addToOrder(menuItem.id, menuItem.displayName || menuItem.name);
                         }
-                    ]);
-                    
-                    const response = await result.response;
-                    const text = response.text();
-                    const cleanJson = text.replace(/```json|```/g, '').trim();
-                    const items = JSON.parse(cleanJson);
-                    
-                    // Zur Bestellung hinzufügen
-                    items.forEach(item => {
-                        const menuItem = menuItems.find(m => 
-                            (m.displayName || m.name).toLowerCase().includes(item.gericht.toLowerCase())
-                        );
-                        
-                        if (menuItem) {
-                            for (let i = 0; i < (item.menge || 1); i++) {
-                                addToOrder(menuItem.id, menuItem.displayName || menuItem.name);
-                            }
-                        }
-                    });
-                    
-                    document.getElementById('status').innerHTML = '✅ Verstanden!';
-                    
-                    if (items.length === 0) {
-                        document.getElementById('status').innerHTML = '❓ Nichts verstanden';
                     }
-                };
+                });
+                
+                if (items.length > 0) {
+                    document.getElementById('recognizedText').innerHTML = 
+                        `<span>✅</span> "${text}"<br><small>Gefunden: ${items.map(i => i.gericht).join(', ')}</small>`;
+                }
                 
             } catch (error) {
-                console.error('Gemini Fehler:', error);
-                document.getElementById('status').innerHTML = '❌ Fehler bei der Verarbeitung';
+                console.error('❌ Gemini Fehler:', error);
+                document.getElementById('recognizedText').innerHTML = 
+                    `<span>❌</span> "${text}"<br><small>Fehler bei der Verarbeitung</small>`;
             }
         }
         
@@ -322,6 +354,7 @@ Beispiel: Für "zweimal Pizza" -> [{"gericht": "Pizza", "menge": 2}]
         function addToOrder(itemId, itemName) {
             if (!itemName) {
                 const item = menuItems.find(i => i.id === itemId);
+                if (!item) return;
                 itemName = item.displayName || item.name;
             }
             
@@ -358,12 +391,15 @@ Beispiel: Für "zweimal Pizza" -> [{"gericht": "Pizza", "menge": 2}]
                 });
                 
                 list.innerHTML = html;
-                total.textContent = currentOrder.length;
+                total.textContent = currentOrder.length + ' Artikel';
             } else {
                 section.style.display = 'none';
             }
         }
         
+        // ===========================================
+        // Send Order
+        // ===========================================
         async function sendOrder() {
             if (currentOrder.length === 0) return;
             
@@ -386,18 +422,29 @@ Beispiel: Für "zweimal Pizza" -> [{"gericht": "Pizza", "menge": 2}]
             
             currentOrder = [];
             updateOrderDisplay();
-            alert('Bestellung aufgegeben!');
+            alert('✅ Bestellung aufgegeben!');
+        }
+        
+        // ===========================================
+        // Controls
+        // ===========================================
+        function startRecording() {
+            if (recognition && !isRecording) {
+                recognition.start();
+            }
+        }
+        
+        function stopRecording() {
+            isRecording = false;
+            micBtn.classList.remove('recording');
         }
         
         // ===========================================
         // Event Listeners
         // ===========================================
-        document.getElementById('micBtn').addEventListener('mousedown', startRecording);
-        document.getElementById('micBtn').addEventListener('mouseup', stopRecording);
-        document.getElementById('micBtn').addEventListener('mouseleave', stopRecording);
+        document.getElementById('micBtn').addEventListener('click', startRecording);
         document.getElementById('sendOrderBtn').addEventListener('click', sendOrder);
         
-        // Global functions
         window.addToOrder = addToOrder;
         window.removeFromOrder = removeFromOrder;
         
