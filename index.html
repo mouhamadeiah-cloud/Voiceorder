@@ -261,25 +261,30 @@
         // ===========================================
         // Load Menu from Firebase
         // ===========================================
-        async function loadMenuFromFirebase() {
-            try {
-                console.log("📥 Lade Gerichte...");
-                const snapshot = await db.collection('items').where('active', '==', true).get();
-                menuItems = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    name: doc.data().displayName || doc.data().name,
-                    price: doc.data().price || 0
-                }));
-                
-                menuLoaded = true;
-                console.log(`✅ ${menuItems.length} Gerichte geladen`);
-                return true;
-            } catch (error) {
-                console.error("❌ Firebase Fehler:", error);
-                showError("Fehler beim Laden der Speisekarte");
-                return false;
-            }
-        }
+async function loadMenuFromFirebase() {
+    try {
+        console.log("📥 Lade Gerichte...");
+        const snapshot = await db.collection('items').where('active', '==', true).get();
+        menuItems = snapshot.docs.map(doc => ({
+            id: doc.id,
+            name: doc.data().displayName || doc.data().name,
+            price: doc.data().price || 0
+        }));
+        
+        menuLoaded = true;
+        console.log(`✅ ${menuItems.length} Gerichte geladen`);
+        
+        // 🔴 كود التشخيص
+        console.log("📋 Alle Gerichte:", menuItems.map(i => i.name).join(', '));
+        showError("Geladen: " + menuItems.slice(0,5).map(i => i.name).join(', ') + "...");
+        
+        return true;
+    } catch (error) {
+        console.error("❌ Firebase Fehler:", error);
+        showError("Fehler beim Laden der Speisekarte");
+        return false;
+    }
+}
         
         // ===========================================
         // Gemini function
