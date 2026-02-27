@@ -3,927 +3,174 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚙️ Menü Admin</title>
+    <title>🍦 Die Primel Eiscafé - Speisekarte</title>
     <style>
-        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
         body {
-            margin: 0;
-            background: #f0f2f5;
-        }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 24px 32px;
-            margin-bottom: 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        .container {
-            max-width: 1200px;
+            font-family: system-ui, sans-serif;
+            max-width: 600px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 20px;
+            background: #f8f5f0;
         }
-        
-        h1 { margin: 0; font-size: 28px; }
-        .subtitle { margin: 8px 0 0; opacity: 0.9; }
-        
-        .back-link {
-            color: white;
-            text-decoration: none;
-            opacity: 0.8;
-            margin-top: 10px;
-            display: inline-block;
-        }
-        
-        .back-link:hover { opacity: 1; }
-        
-        .section {
-            background: white;
-            border-radius: 20px;
-            padding: 24px;
-            margin-bottom: 30px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .section-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #2d3748;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 15px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 600;
-            color: #4a5568;
-        }
-        
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e2e8f0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-        
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-        
-        .form-group input[type="checkbox"] {
-            width: auto;
-            margin-right: 10px;
-        }
-        
-        .checkbox-group {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            padding: 10px;
-            background: #f7fafc;
-            border-radius: 10px;
-        }
-        
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            background: white;
-            padding: 5px 15px;
-            border-radius: 25px;
-            border: 1px solid #e2e8f0;
-        }
-        
-        .btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 25px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 16px;
-        }
-        
-        .btn:hover { background: #5a67d8; transform: scale(1.02); }
-        
-        .btn-secondary {
-            background: #48bb78;
-        }
-        
-        .btn-secondary:hover { background: #38a169; }
-        
-        .btn-danger {
-            background: #f56565;
-        }
-        
-        .btn-danger:hover { background: #e53e3e; }
-        
-        .table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        
-        .table th {
-            text-align: left;
-            padding: 12px;
-            background: #f7fafc;
-            color: #4a5568;
-            font-weight: 600;
-        }
-        
-        .table td {
-            padding: 12px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        
-        .badge {
-            background: #e2e8f0;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            color: #4a5568;
-            margin: 2px;
-            display: inline-block;
-        }
-        
-        .edit-btn {
-            background: #e2e8f0;
-            border: none;
-            padding: 5px 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 0 2px;
-        }
-        
-        .edit-btn:hover { background: #cbd5e0; }
-        
-        .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #48bb78;
-            color: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            animation: slideRight 0.3s ease;
-            z-index: 1100;
-        }
-        
-        .notification.error {
-            background: #f56565;
-        }
-        
-        @keyframes slideRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            background: #f7fafc;
-            border-radius: 20px;
-            color: #718096;
-        }
-        
-        .suggestion-badge {
-            background: #667eea20;
-            color: #667eea;
-            padding: 8px 15px;
-            border-radius: 20px;
-            font-size: 14px;
-            display: inline-block;
-            margin: 5px;
-            cursor: pointer;
-            border: 1px solid #667eea40;
-        }
-        
-        .suggestion-badge:hover {
-            background: #667eea;
-            color: white;
-        }
-        
-        .tab-nav {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #e2e8f0;
+        h1 {
+            color: #8B4513;
+            border-bottom: 2px solid #DEB887;
             padding-bottom: 10px;
         }
-        
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
+        .kategorie {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .kategorie h2 {
+            color: #CD853F;
+            margin-top: 0;
+        }
+        .gericht {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px dashed #eee;
+        }
+        .name {
+            font-weight: 600;
+            color: #333;
+        }
+        .id {
+            font-size: 12px;
+            color: #999;
+            background: #f0f0f0;
+            padding: 2px 6px;
             border-radius: 10px;
+            margin-left: 8px;
+        }
+        .preis {
+            color: #8B4513;
             font-weight: 600;
         }
-        
-        .tab.active {
-            background: #667eea;
-            color: white;
+        .hinweis {
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="container">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <h1>⚙️ Menü Admin</h1>
-                    <div class="subtitle">Einfache Verwaltung von Gerichten, Kategorien und Extras</div>
-                </div>
-                <a href="küche.html" class="back-link">← Zurück zur Küche</a>
-            </div>
-        </div>
+    <h1>🍦 Die Primel Eiscafé</h1>
+    <div class="hinweis">
+        ⓘ Diese Seite wird automatisch aus unserer Datenbank aktualisiert.
     </div>
-    
-    <div class="container">
-        <!-- Tabs -->
-        <div class="tab-nav">
-            <div class="tab active" onclick="switchTab('items')">🍽️ Gerichte</div>
-            <div class="tab" onclick="switchTab('categories')">📁 Kategorien</div>
-            <div class="tab" onclick="switchTab('extras')">➕ Extras</div>
-        </div>
-        
-        <!-- Items Tab -->
-        <div id="items-tab" class="tab-content" style="display: block;">
-            <div class="section">
-                <div class="section-title">
-                    <span>🍽️ Gericht hinzufügen / bearbeiten</span>
-                </div>
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Name des Gerichts</label>
-                        <input type="text" id="itemName" placeholder="z.B. Erdbeerbecher" oninput="suggestCategory()">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Anzeigename</label>
-                        <input type="text" id="itemDisplayName" placeholder="Erdbeerbecher">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Kategorie</label>
-                        <select id="itemCategory" onchange="suggestExtras()">
-                            <option value="">Bitte wählen</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Keywords (durch Komma getrennt)</label>
-                        <input type="text" id="itemKeywords" placeholder="erdbeerbecher, erdbeer becher">
-                        <small style="color: #718096;">Diese Wörter erkennt der Sprachassistent</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Preis (€)</label>
-                        <input type="number" id="itemPrice" step="0.10" min="0" value="0.00">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Extras (verfügbar für dieses Gericht)</label>
-                    <div class="checkbox-group" id="itemExtras">
-                        <!-- سيتم تعبئتها تلقائياً حسب الكategori -->
-                    </div>
-                </div>
-                
-                <!-- Vorschläge für Keywords -->
-                <div style="margin: 20px 0;">
-                    <label>🔍 Vorgeschlagene Keywords:</label>
-                    <div id="suggestedKeywords">
-                        <span class="suggestion-badge" onclick="addKeyword('erdbeerbecher')">erdbeerbecher</span>
-                        <span class="suggestion-badge" onclick="addKeyword('erdbeer')">erdbeer</span>
-                        <span class="suggestion-badge" onclick="addKeyword('becher')">becher</span>
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 10px;">
-                    <button class="btn" onclick="saveItem()">💾 Gericht speichern</button>
-                    <button class="btn btn-secondary" onclick="clearItemForm()">🔄 Neu</button>
-                </div>
-                
-                <input type="hidden" id="itemId">
-            </div>
-            
-            <div class="section">
-                <div class="section-title">📋 Vorhandene Gerichte</div>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Kategorie</th>
-                            <th>Keywords</th>
-                            <th>Extras</th>
-                            <th>Preis</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-                    <tbody id="itemsTable">
-                        <tr>
-                            <td colspan="6" class="empty-state">Lade Gerichte...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <!-- Categories Tab -->
-        <div id="categories-tab" class="tab-content" style="display: none;">
-            <div class="section">
-                <div class="section-title">📁 Kategorie hinzufügen</div>
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Name der Kategorie</label>
-                        <input type="text" id="categoryName" placeholder="z.B. Becher">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Trigger Wörter (durch Komma)</label>
-                        <input type="text" id="categoryTriggerWords" placeholder="becher">
-                        <small>Wörter die diese Kategorie aktivieren</small>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Priorität</label>
-                        <select id="categoryPriority">
-                            <option value="1">1 - Niedrig</option>
-                            <option value="2" selected>2 - Normal</option>
-                            <option value="3">3 - Hoch</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px;">
-                    <button class="btn" onclick="saveCategory()">💾 Kategorie speichern</button>
-                </div>
-                
-                <input type="hidden" id="categoryId">
-            </div>
-            
-            <div class="section">
-                <div class="section-title">📋 Vorhandene Kategorien</div>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Trigger Wörter</th>
-                            <th>Priorität</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-                    <tbody id="categoriesTable">
-                        <tr>
-                            <td colspan="4" class="empty-state">Lade Kategorien...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-        
-        <!-- Extras Tab -->
-        <div id="extras-tab" class="tab-content" style="display: none;">
-            <div class="section">
-                <div class="section-title">➕ Extra hinzufügen</div>
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Name des Extras</label>
-                        <input type="text" id="extraName" placeholder="z.B. Sahne">
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Preis (€)</label>
-                        <input type="number" id="extraPrice" step="0.10" min="0" value="0.00">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Verfügbar in Kategorien</label>
-                    <div class="checkbox-group" id="extraCategories">
-                        <!-- سيتم تعبئتها من Firebase -->
-                    </div>
-                </div>
-                
-                <div style="margin-top: 20px;">
-                    <button class="btn" onclick="saveExtra()">💾 Extra speichern</button>
-                </div>
-                
-                <input type="hidden" id="extraId">
-            </div>
-            
-            <div class="section">
-                <div class="section-title">📋 Vorhandene Extras</div>
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Verfügbar in</th>
-                            <th>Preis</th>
-                            <th>Aktionen</th>
-                        </tr>
-                    </thead>
-                    <tbody id="extrasTable">
-                        <tr>
-                            <td colspan="4" class="empty-state">Lade Extras...</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-    
+    <div id="menu-container">Lade Speisekarte...</div>
+
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    
+
     <script>
-        // ===========================================
-        // Firebase Config
-        // ===========================================
+        // 🔴 Firebase Config - HIER DEINE DATEN (schon vorhanden)
         const firebaseConfig = {
             apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
             authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
+            databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
             projectId: "restaurantsysteme-eaff6",
             storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
             messagingSenderId: "891911663005",
             appId: "1:891911663005:web:85672b40c90c158c2ad374"
         };
-        
+
+        // Firebase initialisieren
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        
+
         // ===========================================
-        // State
+        // Funktion zum Laden und Anzeigen der Karte
         // ===========================================
-        let categories = [];
-        let extras = [];
-        let items = [];
-        
-        // ===========================================
-        // UI Functions
-        // ===========================================
-        function showNotification(message, type = 'success') {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type === 'error' ? 'error' : ''}`;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
-        }
-        
-        function switchTab(tabName) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.style.display = 'none');
-            
-            event.target.classList.add('active');
-            document.getElementById(tabName + '-tab').style.display = 'block';
-        }
-        
-        // ===========================================
-        // Suggest Functions (Automatische Vorschläge)
-        // ===========================================
-        function suggestCategory() {
-            const name = document.getElementById('itemName').value.toLowerCase();
-            if (!name) return;
-            
-            // Automatische Kategorie-Vorschläge
-            if (name.includes('becher')) {
-                selectCategoryByName('Becher');
-            } else if (name.includes('kuchen')) {
-                selectCategoryByName('Kuchen');
-            } else if (name.includes('tee') || name.includes('cola') || name.includes('eistee')) {
-                selectCategoryByName('Getränke');
-            }
-            
-            // Automatische Keywords vorschlagen
-            suggestKeywords(name);
-        }
-        
-        function selectCategoryByName(catName) {
-            const select = document.getElementById('itemCategory');
-            for (let i = 0; i < select.options.length; i++) {
-                if (select.options[i].text.toLowerCase().includes(catName.toLowerCase())) {
-                    select.selectedIndex = i;
-                    suggestExtras();
-                    break;
-                }
-            }
-        }
-        
-        function suggestKeywords(name) {
-            const words = name.split(' ');
-            let suggestions = [];
-            
-            words.forEach(word => {
-                if (word.length > 3) {
-                    suggestions.push(word);
-                }
-            });
-            
-            // Entferne Duplikate
-            suggestions = [...new Set(suggestions)];
-            
-            let html = '';
-            suggestions.forEach(word => {
-                html += `<span class="suggestion-badge" onclick="addKeyword('${word}')">${word}</span>`;
-            });
-            
-            // Standard Keywords
-            if (name.includes('erdbeer')) {
-                html += `<span class="suggestion-badge" onclick="addKeyword('erdbeere')">erdbeere</span>`;
-            }
-            if (name.includes('schoko')) {
-                html += `<span class="suggestion-badge" onclick="addKeyword('schokolade')">schokolade</span>`;
-            }
-            
-            document.getElementById('suggestedKeywords').innerHTML = html || 'Keine Vorschläge';
-        }
-        
-        function addKeyword(keyword) {
-            const input = document.getElementById('itemKeywords');
-            const current = input.value ? input.value.split(',').map(k => k.trim()) : [];
-            
-            if (!current.includes(keyword)) {
-                current.push(keyword);
-                input.value = current.join(', ');
-            }
-        }
-        
-        function suggestExtras() {
-            const categoryId = document.getElementById('itemCategory').value;
-            if (!categoryId) return;
-            
-            // Finde Extras für diese Kategorie
-            const availableExtras = extras.filter(extra => 
-                !extra.categories || extra.categories.length === 0 || extra.categories.includes(categoryId)
-            );
-            
-            let html = '';
-            availableExtras.forEach(extra => {
-                html += `
-                    <div class="checkbox-item">
-                        <input type="checkbox" value="${extra.id}" id="extra_${extra.id}">
-                        <label for="extra_${extra.id}">${extra.name} (€${extra.price.toFixed(2)})</label>
-                    </div>
-                `;
-            });
-            
-            document.getElementById('itemExtras').innerHTML = html || 'Keine Extras verfügbar';
-        }
-        
-        // ===========================================
-        // Load Data from Firebase
-        // ===========================================
-        async function loadCategories() {
-            const snapshot = await db.collection('categories').get();
-            categories = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // Update category dropdown
-            let options = '<option value="">Bitte wählen</option>';
-            categories.forEach(cat => {
-                if (cat.active !== false) {
-                    options += `<option value="${cat.id}">${cat.name}</option>`;
-                }
-            });
-            document.getElementById('itemCategory').innerHTML = options;
-            
-            // Update categories table
-            let tableHtml = '';
-            categories.forEach(cat => {
-                tableHtml += `
-                    <tr>
-                        <td>${cat.name}</td>
-                        <td>${(cat.triggerWords || []).join(', ')}</td>
-                        <td>${cat.priority || 1}</td>
-                        <td>
-                            <button class="edit-btn" onclick="editCategory('${cat.id}')">✏️</button>
-                            <button class="edit-btn" onclick="deleteCategory('${cat.id}')">🗑️</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            document.getElementById('categoriesTable').innerHTML = tableHtml || '<tr><td colspan="4" class="empty-state">Keine Kategorien</td></tr>';
-        }
-        
-        async function loadExtras() {
-            const snapshot = await db.collection('extras').get();
-            extras = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            // Update extra categories checkboxes
-            let catHtml = '';
-            categories.forEach(cat => {
-                catHtml += `
-                    <div class="checkbox-item">
-                        <input type="checkbox" value="${cat.id}" id="cat_${cat.id}">
-                        <label for="cat_${cat.id}">${cat.name}</label>
-                    </div>
-                `;
-            });
-            document.getElementById('extraCategories').innerHTML = catHtml || 'Keine Kategorien vorhanden';
-            
-            // Update extras table
-            let tableHtml = '';
-            extras.forEach(extra => {
-                const catNames = (extra.categories || []).map(id => {
-                    const cat = categories.find(c => c.id === id);
-                    return cat ? cat.name : id;
-                }).join(', ');
-                
-                tableHtml += `
-                    <tr>
-                        <td>${extra.name}</td>
-                        <td>${catNames || 'Alle'}</td>
-                        <td>€${(extra.price || 0).toFixed(2)}</td>
-                        <td>
-                            <button class="edit-btn" onclick="editExtra('${extra.id}')">✏️</button>
-                            <button class="edit-btn" onclick="deleteExtra('${extra.id}')">🗑️</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            document.getElementById('extrasTable').innerHTML = tableHtml || '<tr><td colspan="4" class="empty-state">Keine Extras</td></tr>';
-        }
-        
-        async function loadItems() {
-            const snapshot = await db.collection('items').get();
-            items = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            
-            let tableHtml = '';
-            items.forEach(item => {
-                const category = categories.find(c => c.id === item.categoryId);
-                
-                tableHtml += `
-                    <tr>
-                        <td>${item.displayName || item.name}</td>
-                        <td>${category ? category.name : '-'}</td>
-                        <td>${(item.keywords || []).join(', ')}</td>
-                        <td>${(item.extras || []).length} Extras</td>
-                        <td>€${(item.price || 0).toFixed(2)}</td>
-                        <td>
-                            <button class="edit-btn" onclick="editItem('${item.id}')">✏️</button>
-                            <button class="edit-btn" onclick="deleteItem('${item.id}')">🗑️</button>
-                        </td>
-                    </tr>
-                `;
-            });
-            document.getElementById('itemsTable').innerHTML = tableHtml || '<tr><td colspan="6" class="empty-state">Keine Gerichte</td></tr>';
-        }
-        
-        // ===========================================
-        // Save Functions
-        // ===========================================
-        async function saveItem() {
-            const selectedExtras = [];
-            document.querySelectorAll('#itemExtras input:checked').forEach(cb => {
-                selectedExtras.push(cb.value);
-            });
-            
-            const data = {
-                name: document.getElementById('itemName').value,
-                displayName: document.getElementById('itemDisplayName').value || document.getElementById('itemName').value,
-                categoryId: document.getElementById('itemCategory').value,
-                keywords: document.getElementById('itemKeywords').value.split(',').map(k => k.trim()).filter(k => k),
-                extras: selectedExtras,
-                price: parseFloat(document.getElementById('itemPrice').value) || 0,
-                active: true,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            if (!data.name) {
-                showNotification('Bitte Namen eingeben', 'error');
-                return;
-            }
-            
+        async function loadMenu() {
             try {
-                if (document.getElementById('itemId').value) {
-                    await db.collection('items').doc(document.getElementById('itemId').value).update(data);
-                    showNotification('Gericht aktualisiert');
-                } else {
-                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                    await db.collection('items').add(data);
-                    showNotification('Gericht erstellt');
+                // 🔴 WICHTIG: Gemini liest diese Struktur!
+                // Holt alle Kategorien
+                const categoriesSnapshot = await db.collection('categories').get();
+                const categories = categoriesSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Holt alle aktiven Gerichte
+                const itemsSnapshot = await db.collection('items').where('active', '==', true).get();
+                const items = itemsSnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+
+                // Gruppiere Gerichte nach Kategorie
+                const itemsByCategory = {};
+                items.forEach(item => {
+                    const catId = item.categoryId || 'default';
+                    if (!itemsByCategory[catId]) itemsByCategory[catId] = [];
+                    itemsByCategory[catId].push(item);
+                });
+
+                // HTML erstellen
+                let html = '';
+
+                // 🔴 Sortiere Kategorien nach Priorität (wichtig für Gemini)
+                const sortedCategories = categories.sort((a, b) => (b.priority || 1) - (a.priority || 1));
+
+                for (const category of sortedCategories) {
+                    const catItems = itemsByCategory[category.id] || [];
+                    if (catItems.length === 0) continue;
+
+                    html += `<div class="kategorie">`;
+                    html += `<h2>${category.name}</h2>`;
+
+                    // 🔴 Sortiere Gerichte alphabetisch für bessere Lesbarkeit
+                    const sortedItems = catItems.sort((a, b) => 
+                        (a.displayName || a.name).localeCompare(b.displayName || b.name)
+                    );
+
+                    for (const item of sortedItems) {
+                        const name = item.displayName || item.name;
+                        const price = (item.price || 0).toFixed(2);
+                        
+                        html += `
+                            <div class="gericht">
+                                <div>
+                                    <span class="name">${name}</span>
+                                    <span class="id">ID: ${item.id}</span>
+                                </div>
+                                <span class="preis">€${price}</span>
+                            </div>
+                        `;
+                    }
+
+                    html += `</div>`;
                 }
+
+                // Falls keine Gerichte
+                if (html === '') {
+                    html = '<div class="kategorie"><p>Keine Gerichte verfügbar</p></div>';
+                }
+
+                document.getElementById('menu-container').innerHTML = html;
+
+                // 🔴 Für Gemini: Logge die Struktur (wichtig zum Debuggen)
+                console.log('✅ Menü geladen mit', items.length, 'Gerichten');
+                console.log('📋 Kategorien:', categories.map(c => c.name));
                 
-                clearItemForm();
-                loadItems();
             } catch (error) {
-                showNotification('Fehler: ' + error.message, 'error');
+                console.error('❌ Fehler:', error);
+                document.getElementById('menu-container').innerHTML = 
+                    '<div class="kategorie"><p>Fehler beim Laden der Speisekarte</p></div>';
             }
         }
-        
-        async function saveCategory() {
-            const data = {
-                name: document.getElementById('categoryName').value,
-                triggerWords: document.getElementById('categoryTriggerWords').value.split(',').map(w => w.trim()).filter(w => w),
-                priority: parseInt(document.getElementById('categoryPriority').value),
-                active: true,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            if (!data.name) {
-                showNotification('Bitte Namen eingeben', 'error');
-                return;
-            }
-            
-            try {
-                if (document.getElementById('categoryId').value) {
-                    await db.collection('categories').doc(document.getElementById('categoryId').value).update(data);
-                    showNotification('Kategorie aktualisiert');
-                } else {
-                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                    await db.collection('categories').add(data);
-                    showNotification('Kategorie erstellt');
-                }
-                
-                document.getElementById('categoryName').value = '';
-                document.getElementById('categoryTriggerWords').value = '';
-                document.getElementById('categoryId').value = '';
-                loadCategories();
-                loadExtras(); // Refresh extra categories
-            } catch (error) {
-                showNotification('Fehler: ' + error.message, 'error');
-            }
-        }
-        
-        async function saveExtra() {
-            const selectedCategories = [];
-            document.querySelectorAll('#extraCategories input:checked').forEach(cb => {
-                selectedCategories.push(cb.value);
-            });
-            
-            const data = {
-                name: document.getElementById('extraName').value,
-                categories: selectedCategories,
-                price: parseFloat(document.getElementById('extraPrice').value) || 0,
-                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-            
-            if (!data.name) {
-                showNotification('Bitte Namen eingeben', 'error');
-                return;
-            }
-            
-            try {
-                if (document.getElementById('extraId').value) {
-                    await db.collection('extras').doc(document.getElementById('extraId').value).update(data);
-                    showNotification('Extra aktualisiert');
-                } else {
-                    data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-                    await db.collection('extras').add(data);
-                    showNotification('Extra erstellt');
-                }
-                
-                document.getElementById('extraName').value = '';
-                document.getElementById('extraPrice').value = '0.00';
-                document.getElementById('extraId').value = '';
-                loadExtras();
-            } catch (error) {
-                showNotification('Fehler: ' + error.message, 'error');
-            }
-        }
-        
-        // ===========================================
-        // Edit Functions
-        // ===========================================
-        function editItem(id) {
-            const item = items.find(i => i.id === id);
-            if (!item) return;
-            
-            document.getElementById('itemId').value = item.id;
-            document.getElementById('itemName').value = item.name || '';
-            document.getElementById('itemDisplayName').value = item.displayName || '';
-            document.getElementById('itemCategory').value = item.categoryId || '';
-            document.getElementById('itemKeywords').value = (item.keywords || []).join(', ');
-            document.getElementById('itemPrice').value = item.price || 0;
-            
-            // Suggest extras for this category
-            setTimeout(() => {
-                if (item.extras) {
-                    item.extras.forEach(extraId => {
-                        const cb = document.getElementById(`extra_${extraId}`);
-                        if (cb) cb.checked = true;
-                    });
-                }
-            }, 500);
-        }
-        
-        function editCategory(id) {
-            const cat = categories.find(c => c.id === id);
-            if (!cat) return;
-            
-            document.getElementById('categoryId').value = cat.id;
-            document.getElementById('categoryName').value = cat.name || '';
-            document.getElementById('categoryTriggerWords').value = (cat.triggerWords || []).join(', ');
-            document.getElementById('categoryPriority').value = cat.priority || 2;
-        }
-        
-        function editExtra(id) {
-            const extra = extras.find(e => e.id === id);
-            if (!extra) return;
-            
-            document.getElementById('extraId').value = extra.id;
-            document.getElementById('extraName').value = extra.name || '';
-            document.getElementById('extraPrice').value = extra.price || 0;
-            
-            // Check categories
-            setTimeout(() => {
-                if (extra.categories) {
-                    extra.categories.forEach(catId => {
-                        const cb = document.getElementById(`cat_${catId}`);
-                        if (cb) cb.checked = true;
-                    });
-                }
-            }, 500);
-        }
-        
-        // ===========================================
-        // Delete Functions
-        // ===========================================
-        async function deleteItem(id) {
-            if (!confirm('Wirklich löschen?')) return;
-            await db.collection('items').doc(id).delete();
-            showNotification('Gelöscht');
-            loadItems();
-        }
-        
-        async function deleteCategory(id) {
-            if (!confirm('Wirklich löschen?')) return;
-            await db.collection('categories').doc(id).delete();
-            showNotification('Gelöscht');
-            loadCategories();
-        }
-        
-        async function deleteExtra(id) {
-            if (!confirm('Wirklich löschen?')) return;
-            await db.collection('extras').doc(id).delete();
-            showNotification('Gelöscht');
-            loadExtras();
-        }
-        
-        // ===========================================
-        // Helper Functions
-        // ===========================================
-        function clearItemForm() {
-            document.getElementById('itemId').value = '';
-            document.getElementById('itemName').value = '';
-            document.getElementById('itemDisplayName').value = '';
-            document.getElementById('itemCategory').value = '';
-            document.getElementById('itemKeywords').value = '';
-            document.getElementById('itemPrice').value = '0.00';
-            document.getElementById('itemExtras').innerHTML = '';
-        }
-        
-        // ===========================================
-        // Initialize
-        // ===========================================
-        async function init() {
-            await loadCategories();
-            await loadExtras();
-            await loadItems();
-        }
-        
-        init();
-        
-        // Make functions global
-        window.switchTab = switchTab;
-        window.saveItem = saveItem;
-        window.saveCategory = saveCategory;
-        window.saveExtra = saveExtra;
-        window.editItem = editItem;
-        window.editCategory = editCategory;
-        window.editExtra = editExtra;
-        window.deleteItem = deleteItem;
-        window.deleteCategory = deleteCategory;
-        window.deleteExtra = deleteExtra;
-        window.addKeyword = addKeyword;
-        window.suggestCategory = suggestCategory;
-        window.clearItemForm = clearItemForm;
+
+        // Start
+        loadMenu();
     </script>
 </body>
 </html>
