@@ -1,664 +1,114 @@
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍽️ Bestellassistent - Gast</title>
-    <style>
-        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
-        body { margin: 0; background: #f5f5f5; }
-        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
-        
-        .header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 24px 16px;
-            border-radius: 0 0 30px 30px;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-        }
-        
-        h1 { margin: 0; font-size: 28px; }
-        .subtitle { margin: 8px 0 0; opacity: 0.9; font-size: 16px; }
-        
-        .menu-section {
-            background: white;
-            border-radius: 20px;
-            padding: 16px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .menu-section h2 {
-            margin: 0 0 16px 0;
-            font-size: 20px;
-            color: #333;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .menu-item {
-            padding: 16px 0;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .menu-item:last-child { border-bottom: none; }
-        
-        .item-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .item-name { font-weight: 600; color: #333; font-size: 18px; }
-        .item-price { color: #667eea; font-weight: 600; }
-        
-        .item-extras {
-            font-size: 14px;
-            color: #666;
-            margin: 8px 0;
-            padding: 8px;
-            background: #f8f9fa;
-            border-radius: 10px;
-        }
-        
-        .extras-title {
-            font-weight: 600;
-            color: #444;
-            margin-bottom: 4px;
-        }
-        
-        .extras-list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            margin-top: 8px;
-        }
-        
-        .extra-tag {
-            background: #e2e8f0;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 13px;
-            color: #2d3748;
-        }
-        
-        .add-btn {
-            background: #667eea;
-            color: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 25px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            width: 100%;
-            margin-top: 8px;
-        }
-        
-        .add-btn:hover { background: #5a67d8; }
-        
-        .voice-section {
-            background: white;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
-        }
-        
-        .mic-button {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: #667eea;
-            border: none;
-            color: white;
-            font-size: 36px;
-            cursor: pointer;
-            margin: 0 auto 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-        
-        .mic-button.recording {
-            background: #e53e3e;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4); }
-            50% { transform: scale(1.1); box-shadow: 0 4px 25px rgba(229, 62, 62, 0.6); }
-            100% { transform: scale(1); box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4); }
-        }
-        
-        .recognized-text {
-            background: #f0f4ff;
-            padding: 16px;
-            border-radius: 12px;
-            margin: 16px 0;
-            font-size: 18px;
-            min-height: 60px;
-            text-align: right;
-            direction: rtl;
-        }
-        
-        .recognized-text span { color: #667eea; font-weight: 600; }
-        
-        .order-items {
-            background: white;
-            border-radius: 20px;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        
-        .order-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            margin-bottom: 8px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .order-item-info { flex: 1; }
-        .order-item-name { font-weight: 600; font-size: 16px; }
-        .order-item-extras { 
-            font-size: 13px; 
-            color: #666;
-            margin-top: 4px;
-        }
-        
-        .delete-btn {
-            background: #feb2b2;
-            color: #c53030;
-            border: none;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .send-btn {
-            background: #48bb78;
-            color: white;
-            border: none;
-            padding: 16px;
-            border-radius: 30px;
-            font-size: 18px;
-            font-weight: 600;
-            width: 100%;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-top: 16px;
-        }
-        
-        .send-btn:hover { background: #38a169; }
-        
-        .total-section {
-            background: #e2e8f0;
-            padding: 16px;
-            border-radius: 12px;
-            margin-top: 16px;
-            display: flex;
-            justify-content: space-between;
-            font-weight: 600;
-        }
-        
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0,0,0,0.5);
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .modal.active { display: flex; }
-        
-        .modal-content {
-            background: white;
-            padding: 24px;
-            border-radius: 20px;
-            max-width: 300px;
-            text-align: center;
-        }
-        
-        .checkmark { font-size: 48px; color: #48bb78; }
-        
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #667eea;
-        }
-    </style>
-</head>
-<body>
-    <div class="header">
-        <div class="container">
-            <h1>🍽️ KI Bestellassistent</h1>
-            <div class="subtitle">Einfach sagen was Sie möchten - KI versteht alles</div>
-        </div>
-    </div>
-    
-    <div class="container">
-        <!-- Voice Input -->
-        <div class="voice-section">
-            <button class="mic-button" id="micBtn">🎤</button>
-            <p>Tippen Sie auf das Mikrofon und sprechen Sie Ihre Bestellung</p>
-            <div class="recognized-text" id="recognizedText">
-                <span>👆</span> Hier erscheint Ihre Bestellung
-            </div>
-        </div>
-        
-        <!-- Current Order -->
-        <div class="order-items" id="orderSection" style="display: none;">
-            <h2 style="margin-top: 0;">📋 Ihre Bestellung</h2>
-            <div id="orderList"></div>
-            <div class="total-section" id="totalSection">
-                <span>Gesamt:</span>
-                <span id="totalItems">0 Artikel</span>
-            </div>
-            <button class="send-btn" id="sendOrderBtn">✅ Bestellung aufgeben</button>
-        </div>
-        
-        <!-- Menu Container (wird von Firebase geladen) -->
-        <div id="menuContainer" class="loading">Menü wird geladen...</div>
-    </div>
-    
-    <!-- Success Modal -->
-    <div class="modal" id="successModal">
-        <div class="modal-content">
-            <div class="checkmark">✅</div>
-            <h3>Bestellung aufgegeben!</h3>
-            <p>Ihre Bestellung wurde an die Küche gesendet.</p>
-            <button class="add-btn" onclick="closeModal()">OK</button>
-        </div>
-    </div>
+// ===========================================
+// Speech Recognition - نسخة مصححة
+// ===========================================
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let isRecording = false;
 
-    <!-- Firebase SDKs -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+if (SpeechRecognition) {
+    recognition = new SpeechRecognition();
+    recognition.lang = 'de-DE';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.maxAlternatives = 1; // مهم!
     
-    <!-- Gemini API SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
+    recognition.onstart = function() {
+        isRecording = true;
+        micBtn.classList.add('recording');
+        document.getElementById('recognizedText').innerHTML = '🎤 Höre zu... Sprechen Sie jetzt';
+        console.log('🎤 Recording started');
+    };
     
-    <script>
-        // ===========================================
-        // Firebase Config - HIER DEINE DATEN EINFÜGEN
-        // ===========================================
-const firebaseConfig = {
-  apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
-  authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
-  databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "restaurantsysteme-eaff6",
-  storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
-  messagingSenderId: "891911663005",
-  appId: "1:891911663005:web:85672b40c90c158c2ad374"
-};
+    recognition.onspeechend = function() {
+        console.log('🎤 Speech ended');
+        // لا نوقف التسجيل هنا، نتركه يستمر
+    };
+    
+    recognition.onresult = function(event) {
+        console.log('🎤 Result received:', event);
         
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        let finalTranscript = '';
+        let interimTranscript = '';
         
-        // ===========================================
-        // GEMINI API - DEINEN KEY HIER EINFÜGEN
-        // ===========================================
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- DEIN ECHTER KEY
-        
-        // ===========================================
-        // State
-        // ===========================================
-        let menuItems = [];
-        let categories = [];
-        let extras = [];
-        let currentOrder = [];
-        let lastProcessedText = '';
-        let processingTimeout = null;
-        
-        // ===========================================
-        // Load Menu Data from Firebase
-        // ===========================================
-        async function loadMenuData() {
-            try {
-                const [categoriesSnap, extrasSnap, itemsSnap] = await Promise.all([
-                    db.collection('categories').get(),
-                    db.collection('extras').get(),
-                    db.collection('items').where('active', '==', true).get()
-                ]);
-                
-                categories = categoriesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                extras = extrasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                menuItems = itemsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
-                displayMenu();
-                
-            } catch (error) {
-                console.error('Fehler:', error);
-                document.getElementById('menuContainer').innerHTML = '<div class="empty-state">Fehler beim Laden</div>';
+        for (let i = 0; i < event.results.length; i++) {
+            const transcript = event.results[i][0].transcript;
+            if (event.results[i].isFinal) {
+                finalTranscript += transcript;
+                console.log('✅ Final part:', transcript);
+            } else {
+                interimTranscript += transcript;
+                console.log('⏳ Interim:', transcript);
             }
         }
         
-        // ===========================================
-        // Display Menu
-        // ===========================================
-        function displayMenu() {
-            const container = document.getElementById('menuContainer');
-            
-            if (menuItems.length === 0) {
-                container.innerHTML = '<div class="empty-state">Keine Gerichte verfügbar</div>';
-                return;
-            }
-            
-            // Group by category
-            const itemsByCategory = {};
-            menuItems.forEach(item => {
-                const catId = item.categoryId || 'default';
-                if (!itemsByCategory[catId]) itemsByCategory[catId] = [];
-                itemsByCategory[catId].push(item);
-            });
-            
-            let html = '';
-            categories.forEach(category => {
-                const catItems = itemsByCategory[category.id] || [];
-                if (catItems.length === 0) return;
-                
-                html += `<div class="menu-section"><h2>${category.name}</h2>`;
-                
-                catItems.forEach(item => {
-                    const itemExtras = (item.extras || [])
-                        .map(id => extras.find(e => e.id === id)?.name)
-                        .filter(e => e);
-                    
-                    html += `
-                        <div class="menu-item">
-                            <div class="item-header">
-                                <span class="item-name">${item.displayName || item.name}</span>
-                                <span class="item-price">€${(item.price || 0).toFixed(2)}</span>
-                            </div>
-                            ${itemExtras.length ? `
-                                <div class="item-extras">
-                                    <div class="extras-title">Zutaten:</div>
-                                    <div class="extras-list">
-                                        ${itemExtras.map(e => `<span class="extra-tag">${e}</span>`).join('')}
-                                    </div>
-                                </div>
-                            ` : ''}
-                            <button class="add-btn" onclick="addToOrder('${item.id}')">+ Hinzufügen</button>
-                        </div>
-                    `;
-                });
-                
-                html += `</div>`;
-            });
-            
-            container.innerHTML = html;
+        // عرض النص المؤقت فوراً
+        if (interimTranscript) {
+            document.getElementById('recognizedText').innerHTML = 
+                `<span>🎤</span> "${interimTranscript}"<br><small>Sprechen Sie...</small>`;
         }
         
-        // ===========================================
-        // GEMINI - VERSTEHT ALLES! (Keine Filterung mehr)
-        // ===========================================
-        async function understandWithGemini(text) {
-            try {
-                // Erstelle eine Liste aller Gerichte mit ID
-                const menuList = menuItems.map(item => 
-                    `- ${item.name} (ID: ${item.id})`
-                ).join('\n');
-                
-                const prompt = `
-Du bist ein KI-Assistent für ein Restaurant.
-Der Kunde sagt: "${text}"
-
-Verfügbare Gerichte:
-${menuList}
-
-Aufgabe:
-1. Verstehe was der Kunde bestellen möchte
-2. Finde die passenden Gerichte aus der Liste
-3. Bestimme die Menge (falls nicht genannt, nimm 1)
-
-Antworte NUR mit einem JSON-Array:
-[{"id": "GERICHT_ID", "quantity": ZAHL}]
-
-Beispiel: Für "zweimal Pizza und einmal Cola" -> [{"id": "pizza123", "quantity": 2}, {"id": "cola456", "quantity": 1}]
-
-Wichtig: 
-- Verwende die exakten IDs aus der Liste
-- Kein anderer Text, nur JSON
-`;
-                
-                const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                
-                const result = await model.generateContent(prompt);
-                const response = await result.response;
-                const jsonText = response.text().replace(/```json|```/g, '').trim();
-                
-                const extracted = JSON.parse(jsonText);
-                
-                // Konvertiere zu unserem Format
-                return extracted.map(item => {
-                    const menuItem = menuItems.find(m => m.id === item.id);
-                    if (!menuItem) return null;
-                    
-                    return {
-                        id: menuItem.id,
-                        name: menuItem.displayName || menuItem.name,
-                        quantity: item.quantity || 1,
-                        extras: (menuItem.extras || []).map(id => extras.find(e => e.id === id)?.name).filter(e => e)
-                    };
-                }).filter(i => i !== null);
-                
-            } catch (error) {
-                console.error('Gemini Fehler:', error);
-                return [];
-            }
-        }
-        
-        // ===========================================
-        // Process Order (Nur Gemini, keine Filter)
-        // ===========================================
-        async function processOrderText(text) {
-            if (text === lastProcessedText) return;
-            lastProcessedText = text;
+        // معالجة النص النهائي
+        if (finalTranscript) {
+            console.log('🎤 Final complete:', finalTranscript);
             
             document.getElementById('recognizedText').innerHTML = 
-                `<span>🤖</span> KI analysiert: "${text}"...`;
+                `<span>✅</span> "${finalTranscript}"<br><small>Verarbeite...</small>`;
             
-            const items = await understandWithGemini(text);
-            
-            if (items.length > 0) {
-                items.forEach(item => {
-                    for (let i = 0; i < item.quantity; i++) {
-                        addToOrder(item.id, item.name, item.extras);
-                    }
-                });
-                
-                const foundText = items.map(i => i.name + ' (x' + i.quantity + ')').join(', ');
-                document.getElementById('recognizedText').innerHTML = 
-                    `<span>✅</span> "${text}"<br><small>Gefunden: ${foundText}</small>`;
-            } else {
-                document.getElementById('recognizedText').innerHTML = 
-                    `<span>❌</span> "${text}"<br><small>Nichts erkannt</small>`;
-            }
+            // تأخير بسيط قبل المعالجة
+            setTimeout(() => {
+                processOrderText(finalTranscript);
+            }, 100);
+        }
+    };
+    
+    recognition.onerror = function(event) {
+        console.error('❌ Speech error:', event.error);
+        
+        let errorMessage = 'Fehler beim Hören';
+        if (event.error === 'no-speech') {
+            errorMessage = 'Keine Sprache erkannt. Bitte versuchen Sie es nochmal.';
+        } else if (event.error === 'audio-capture') {
+            errorMessage = 'Mikrofon nicht gefunden.';
+        } else if (event.error === 'not-allowed') {
+            errorMessage = 'Mikrofon-Zugriff verweigert.';
         }
         
-        // ===========================================
-        // Order Management (einfach)
-        // ===========================================
-        function addToOrder(itemId, displayName, extras) {
-            currentOrder.push({
-                id: itemId,
-                name: displayName,
-                extras: extras || [],
-                orderId: Date.now() + Math.random()
-            });
-            updateOrderDisplay();
-        }
+        document.getElementById('recognizedText').innerHTML = 
+            `<span>❌</span> ${errorMessage}`;
         
-        function removeFromOrder(index) {
-            currentOrder.splice(index, 1);
-            updateOrderDisplay();
-        }
-        
-        function updateOrderDisplay() {
-            const section = document.getElementById('orderSection');
-            const list = document.getElementById('orderList');
-            const total = document.getElementById('totalItems');
-            
-            if (currentOrder.length > 0) {
-                section.style.display = 'block';
-                
-                let html = '';
-                currentOrder.forEach((item, i) => {
-                    const extrasHtml = item.extras.length ? 
-                        `<div class="order-item-extras">Mit: ${item.extras.join(', ')}</div>` : '';
-                    
-                    html += `
-                        <div class="order-item">
-                            <div class="order-item-info">
-                                <div class="order-item-name">${item.name}</div>
-                                ${extrasHtml}
-                            </div>
-                            <div class="order-item-actions">
-                                <button class="delete-btn" onclick="removeFromOrder(${i})">✕</button>
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                list.innerHTML = html;
-                total.textContent = currentOrder.length + ' Artikel';
-            } else {
-                section.style.display = 'none';
-            }
-        }
-        
-        // ===========================================
-        // Send Order to Firebase
-        // ===========================================
-        async function sendOrder() {
-            if (currentOrder.length === 0) return alert("Keine Artikel");
-            
-            try {
-                const grouped = {};
-                currentOrder.forEach(item => {
-                    if (!grouped[item.id]) {
-                        grouped[item.id] = {
-                            name: item.name,
-                            quantity: 1,
-                            extras: item.extras
-                        };
-                    } else {
-                        grouped[item.id].quantity += 1;
-                    }
-                });
-                
-                await db.collection('orders').add({
-                    items: Object.values(grouped),
-                    tableNumber: 1,
-                    status: 'pending',
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    orderNumber: Math.floor(Math.random() * 9000) + 1000
-                });
-                
-                currentOrder = [];
-                updateOrderDisplay();
-                document.getElementById('successModal').classList.add('active');
-                
-            } catch (error) {
-                alert('Fehler: ' + error.message);
-            }
-        }
-        
-        // ===========================================
-        // Speech Recognition
-        // ===========================================
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition = null;
-        let isRecording = false;
-        
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'de-DE';
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            
-            recognition.onstart = function() {
-                isRecording = true;
-                micBtn.classList.add('recording');
-                document.getElementById('recognizedText').innerHTML = '🎤 Höre zu...';
-            };
-            
-            recognition.onresult = function(event) {
-                let final = '', interim = '';
-                
-                for (let i = 0; i < event.results.length; i++) {
-                    if (event.results[i].isFinal) {
-                        final = event.results[i][0].transcript;
-                    } else {
-                        interim += event.results[i][0].transcript;
-                    }
+        stopRecording();
+    };
+    
+    recognition.onend = function() {
+        console.log('🎤 Recognition ended');
+        stopRecording();
+    };
+    
+} else {
+    document.getElementById('recognizedText').innerHTML = 
+        '<span>❌</span> Ihr Browser unterstützt keine Spracheingabe';
+}
+
+function startRecording() {
+    if (recognition && !isRecording) {
+        try {
+            recognition.start();
+            console.log('🎤 Starting recording...');
+        } catch (e) {
+            console.error('Failed to start:', e);
+            // إذا فشل، حاول مرة أخرى بعد قليل
+            setTimeout(() => {
+                try {
+                    recognition.start();
+                } catch (e2) {
+                    console.error('Failed again:', e2);
                 }
-                
-                if (interim) {
-                    document.getElementById('recognizedText').innerHTML = 
-                        `<span>🎤</span> "${interim}"<br><small>Höre zu...</small>`;
-                }
-                
-                if (final && final !== lastProcessedText) {
-                    lastProcessedText = final;
-                    
-                    clearTimeout(processingTimeout);
-                    processingTimeout = setTimeout(() => processOrderText(final), 500);
-                }
-            };
-            
-            recognition.onerror = () => {
-                document.getElementById('recognizedText').innerHTML = '<span>❌</span> Fehler beim Hören';
-                stopRecording();
-            };
-            
-            recognition.onend = stopRecording;
+            }, 500);
         }
-        
-        function startRecording() {
-            if (recognition && !isRecording) recognition.start();
-        }
-        
-        function stopRecording() {
-            isRecording = false;
-            micBtn.classList.remove('recording');
-        }
-        
-        function closeModal() {
-            document.getElementById('successModal').classList.remove('active');
-        }
-        
-        // ===========================================
-        // Start
-        // ===========================================
-        loadMenuData();
-        
-        document.getElementById('micBtn').addEventListener('click', startRecording);
-        document.getElementById('sendOrderBtn').addEventListener('click', sendOrder);
-        
-        window.addToOrder = addToOrder;
-        window.removeFromOrder = removeFromOrder;
-        window.closeModal = closeModal;
-    </script>
-</body>
-</html>
+    }
+}
+
+function stopRecording() {
+    isRecording = false;
+    micBtn.classList.remove('recording');
+}
