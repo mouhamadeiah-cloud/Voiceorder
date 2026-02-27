@@ -184,7 +184,7 @@
     <div class="header">
         <div class="container">
             <h1>🍽️ KI Bestellassistent</h1>
-            <div class="subtitle">Sagen Sie einfach, was Sie möchten</div>
+            <div class="subtitle">Sagen Sie einfach, was Sie möchten - ich verstehe Sie!</div>
         </div>
     </div>
     
@@ -217,7 +217,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     
-    <!-- Gemini API SDK -->
+    <!-- Gemini API SDK - WICHTIG: Diese Zeile muss genau so da stehen! -->
     <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
     
     <script>
@@ -238,9 +238,9 @@
         const db = firebase.firestore();
         
         // ===========================================
-        // GEMINI API - ضع مفتاحك هنا
+        // GEMINI API - HIER DEINEN ECHTEN KEY EINFÜGEN
         // ===========================================
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- ضع مفتاح Gemini هنا
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- Dein echter Gemini Key!
         
         // ===========================================
         // State
@@ -328,7 +328,8 @@
         }
         
         // ===========================================
-        // Gemini versteht den Text
+        // Gemini - Der intelligente Kellner 🎯
+        // Findet das passendste Gericht
         // ===========================================
         async function understandWithGemini(text) {
             if (!GEMINI_API_KEY || GEMINI_API_KEY.includes('XXXXX')) {
@@ -339,28 +340,40 @@
             }
 
             try {
-                // قائمة الأطباق
+                // Liste aller Gerichte
                 const menuList = menuItems.map(item => 
                     `- ${item.displayName || item.name}`
                 ).join('\n');
 
                 const prompt = `
-Du bist ein Kellner in einem Restaurant.
-Der Gast sagt: "${text}"
+Du bist ein erfahrener Kellner in einem Restaurant.
+Der Gast sagt zu dir: "${text}"
 
 Speisekarte:
 ${menuList}
 
-Verstehe was der Gast bestellen möchte.
+Deine Aufgabe:
+1. Finde das Gericht, das am besten zu dem passt, was der Gast gesagt hat
+2. Auch wenn der Gast den Namen falsch ausspricht (z.B. "Spagetti Erdbeer" = "Spaghetti")
+3. Bestimme die Menge (wenn nicht genannt, nimm 1)
+
 Antworte NUR mit einem JSON-Array:
-[{"gericht": "GENAUER NAME", "menge": ZAHL}]
+[{"gericht": "GENAUER NAME VON DER KARTE", "menge": ZAHL}]
 
-Beispiel: Für "zweimal Spaghetti" -> [{"gericht": "Spaghetti", "menge": 2}]
+Beispiele:
+- Gast: "Spagetti Erdbeer" → Du denkst an "Spaghetti"
+- Gast: "Cookie Becher" → Du denkst an "Koockiesbecher"
+- Gast: "zweimal Nudeln" → Du denkst an "Spaghetti" mit Menge 2
 
-Wenn du nichts verstehst, antworte mit []
+Wenn du wirklich nichts findest, antworte mit []
 `;
 
-                console.log('🤖 Sende an Gemini:', text);
+                console.log('🤖 Kellner denkt nach über:', text);
+                
+                // Prüfe ob Gemini verfügbar ist
+                if (typeof GoogleGenerativeAI === 'undefined') {
+                    throw new Error('Gemini Bibliothek nicht geladen!');
+                }
                 
                 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -369,39 +382,42 @@ Wenn du nichts verstehst, antworte mit []
                 const response = await result.response;
                 let jsonText = response.text();
                 
-                // تنظيف النص من علامات Markdown
+                // Clean JSON
                 jsonText = jsonText.replace(/```json|```/g, '').trim();
                 
-                console.log('🤖 Gemini Antwort:', jsonText);
+                console.log('🤖 Kellner antwortet:', jsonText);
                 
                 const items = JSON.parse(jsonText);
                 
                 if (items.length > 0) {
                     items.forEach(item => {
-                        // البحث عن الطبق في القائمة
+                        // Finde das Gericht in der Datenbank
                         const menuItem = menuItems.find(m => 
                             (m.displayName || m.name).toLowerCase() === item.gericht.toLowerCase()
                         );
                         
                         if (menuItem) {
+                            const name = menuItem.displayName || menuItem.name;
+                            console.log(`✅ Kellner empfiehlt: ${name} x${item.menge || 1}`);
+                            
                             for (let i = 0; i < (item.menge || 1); i++) {
-                                addToOrder(menuItem.id, menuItem.displayName || menuItem.name);
+                                addToOrder(menuItem.id, name);
                             }
                         }
                     });
                     
                     const foundText = items.map(i => i.gericht + ' (x' + i.menge + ')').join(', ');
                     document.getElementById('recognizedText').innerHTML = 
-                        `<span>✅</span> "${text}"<br><small>Gefunden: ${foundText}</small>`;
+                        `<span>✅</span> "${text}"<br><small>Ich denke: ${foundText}</small>`;
                 } else {
                     document.getElementById('recognizedText').innerHTML = 
-                        `<span>❌</span> "${text}"<br><small>Keine Gerichte erkannt</small>`;
+                        `<span>❌</span> "${text}"<br><small>Kein passendes Gericht gefunden</small>`;
                 }
                 
             } catch (error) {
-                console.error('❌ Gemini Fehler:', error);
+                console.error('❌ Kellner Fehler:', error);
                 document.getElementById('recognizedText').innerHTML = 
-                    `<span>❌</span> "${text}"<br><small>Fehler bei der Verarbeitung: ${error.message}</small>`;
+                    `<span>❌</span> "${text}"<br><small>Fehler: ${error.message}</small>`;
             }
         }
         
@@ -478,7 +494,7 @@ Wenn du nichts verstehst, antworte mit []
             }
             
             try {
-                // تجميع العناصر المتشابهة
+                // Gruppiere gleiche Artikel
                 const grouped = {};
                 currentOrder.forEach(item => {
                     if (!grouped[item.id]) {
@@ -549,7 +565,7 @@ Wenn du nichts verstehst, antworte mit []
                     document.getElementById('recognizedText').innerHTML = 
                         `<span>🎤</span> "${finalTranscript}"<br><small>Verarbeite...</small>`;
                     
-                    // تأخير بسيط للمعالجة
+                    // Kleine Verzögerung
                     setTimeout(() => {
                         processOrderText(finalTranscript);
                     }, 300);
@@ -601,4 +617,3 @@ Wenn du nichts verstehst, antworte mit []
     </script>
 </body>
 </html>
-
