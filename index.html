@@ -5,41 +5,165 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>🍦 Die Primel Eiscafé - Bestellung</title>
     <style>
-        * { box-sizing: border-box; font-family: system-ui, sans-serif; }
-        body { margin: 0; background: #f8f5f0; }
-        .container { max-width: 600px; margin: 0 auto; padding: 16px; }
-        
-        .header {
-            background: linear-gradient(135deg, #8B4513 0%, #CD853F 100%);
-            color: white;
-            padding: 24px 16px;
-            border-radius: 0 0 30px 30px;
-            margin-bottom: 20px;
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, sans-serif;
+            margin: 0;
+            padding: 0;
         }
         
-        h1 { margin: 0; font-size: 28px; }
+        body {
+            background: #f3f1e8;
+            min-height: 100vh;
+        }
         
+        /* Navbar */
+        .navbar {
+            background: #8B4513;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+        
+        .nav-links a {
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .nav-links a:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        /* Main Layout */
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 80px);
+        }
+        
+        /* Left Side - Order Area (2/3) */
+        .order-area {
+            flex: 2;
+            padding: 24px;
+            border-right: 2px solid #e0d6c8;
+        }
+        
+        /* Table Selection */
+        .table-section {
+            background: white;
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #8B4513;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .table-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        
+        .table-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            border: 2px solid #e0d6c8;
+            background: white;
+            font-size: 18px;
+            font-weight: 600;
+            color: #8B4513;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .table-btn:hover {
+            border-color: #8B4513;
+            background: #f8f0e8;
+        }
+        
+        .table-btn.selected {
+            background: #8B4513;
+            color: white;
+            border-color: #8B4513;
+        }
+        
+        .takeaway-btn {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #8B4513;
+            background: white;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #8B4513;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .takeaway-btn.selected {
+            background: #8B4513;
+            color: white;
+        }
+        
+        /* Voice Input */
         .voice-section {
             background: white;
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
             text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
         
         .mic-button {
-            width: 80px;
-            height: 80px;
+            width: 100px;
+            height: 100px;
             border-radius: 50%;
             background: #8B4513;
             border: none;
             color: white;
-            font-size: 36px;
+            font-size: 48px;
             cursor: pointer;
             margin: 0 auto 16px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.3s;
         }
         
         .mic-button.recording {
@@ -54,264 +178,536 @@
         }
         
         .recognized-text {
-            background: #f0f4ff;
-            padding: 16px;
+            background: #f8f0e8;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 16px 0;
+            font-size: 20px;
+            min-height: 80px;
+            text-align: left;
+            color: #333;
+            border-left: 4px solid #8B4513;
+        }
+        
+        .assistant-response {
+            background: #e8e0d8;
+            padding: 20px;
             border-radius: 12px;
             margin: 16px 0;
             font-size: 18px;
-            min-height: 150px;
             text-align: left;
-            white-space: pre-wrap;
-            direction: ltr;
+            color: #333;
+            border-left: 4px solid #5a3e2b;
+            font-style: italic;
         }
         
-        .order-items {
+        /* Right Side - Cart (1/3) */
+        .cart-area {
+            flex: 1;
             background: white;
-            border-radius: 20px;
-            padding: 16px;
-            margin-bottom: 20px;
+            padding: 24px;
+            border-left: 2px solid #e0d6c8;
+            min-width: 300px;
         }
         
-        .order-item {
+        .cart-header {
             display: flex;
             justify-content: space-between;
-            padding: 12px;
-            background: #f8f9fa;
-            border-radius: 12px;
-            margin-bottom: 8px;
+            align-items: center;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e0d6c8;
         }
         
-        .delete-btn {
-            background: #feb2b2;
-            color: #c53030;
+        .cart-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #8B4513;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .table-info {
+            background: #f8f0e8;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 16px;
+            font-weight: 600;
+            color: #8B4513;
+        }
+        
+        .cart-items {
+            min-height: 300px;
+            margin-bottom: 24px;
+        }
+        
+        .cart-item {
+            background: #f8f0e8;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .cart-item-info {
+            flex: 1;
+        }
+        
+        .cart-item-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .cart-item-quantity {
+            color: #8B4513;
+            font-size: 14px;
+        }
+        
+        .cart-item-remove {
+            background: #fee;
+            color: #c00;
             border: none;
             width: 36px;
             height: 36px;
             border-radius: 50%;
             cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
-        .send-btn {
+        .cart-total {
+            border-top: 2px solid #e0d6c8;
+            padding-top: 16px;
+            margin-bottom: 16px;
+        }
+        
+        .total-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .order-btn {
+            width: 100%;
+            padding: 16px;
             background: #48bb78;
             color: white;
             border: none;
-            padding: 16px;
             border-radius: 30px;
             font-size: 18px;
-            width: 100%;
+            font-weight: 600;
             cursor: pointer;
-            margin-top: 16px;
+            transition: background 0.2s;
         }
         
-        .debug-info {
-            background: #e2e8f0;
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 12px;
-            margin-top: 10px;
-            color: #333;
-            text-align: left;
+        .order-btn:hover {
+            background: #38a169;
+        }
+        
+        .order-btn:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #8B4513;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .order-number {
+            font-size: 14px;
+            color: #666;
+            margin-top: 4px;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .order-area {
+                border-right: none;
+            }
+            
+            .cart-area {
+                border-left: none;
+                border-top: 2px solid #e0d6c8;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="container">
-            <h1>🍦 Die Primel Eiscafé</h1>
-            <div>Sagen Sie einfach, was Sie möchten</div>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="logo">
+            <span>🍦</span> Die Primel Eiscafé
         </div>
-    </div>
-    
-    <div class="container">
-        <div class="voice-section">
-            <button class="mic-button" id="micBtn">🎤</button>
-            <p>Tippen Sie auf das Mikrofon und sprechen Sie</p>
-            <div class="recognized-text" id="recognizedText">
-                👆 Hier erscheint Ihre Bestellung
-            </div>
-            <div class="debug-info" id="debugInfo"></div>
-        </div>
-        
-        <div class="order-items" id="orderSection" style="display: none;">
-            <h3>📋 Ihre Bestellung</h3>
-            <div id="orderList"></div>
-            <div>Gesamt: <span id="totalItems">0</span> Artikel</div>
-            <button class="send-btn" id="sendOrderBtn">✅ Bestellung aufgeben</button>
+        <div class="nav-links">
+            <a href="index.html">🍽️ Bestellung</a>
+            <a href="kueche.html">👨‍🍳 Küche</a>
         </div>
     </div>
 
+    <!-- Main Content -->
+    <div class="main-container">
+        <!-- Left Side - Order Area -->
+        <div class="order-area">
+            <!-- Table Selection -->
+            <div class="table-section">
+                <div class="section-title">
+                    <span>🪑</span> Tisch auswählen
+                </div>
+                
+                <div class="table-grid" id="tableGrid">
+                    <!-- Tables 1-20 will be generated here -->
+                </div>
+                
+                <button class="takeaway-btn" id="takeawayBtn">🥡 Takeaway</button>
+            </div>
+
+            <!-- Voice Input -->
+            <div class="voice-section">
+                <button class="mic-button" id="micBtn">🎤</button>
+                <p>Mikrofon drücken und sprechen</p>
+                
+                <div class="recognized-text" id="recognizedText">
+                    👆 Hier erscheint was Sie gesagt haben
+                </div>
+                
+                <div class="assistant-response" id="assistantResponse">
+                    🤵 Hallo! Ich bin Ihr Kellner. Bitte sagen Sie mir, was Sie bestellen möchten.
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Side - Cart -->
+        <div class="cart-area">
+            <div class="cart-header">
+                <div class="cart-title">
+                    <span>🛒</span> Ihre Bestellung
+                </div>
+                <div class="table-info" id="tableInfo">
+                    Kein Tisch
+                </div>
+            </div>
+
+            <div class="cart-items" id="cartItems">
+                <!-- Cart items will appear here -->
+                <div style="text-align: center; color: #999; padding: 40px;">
+                    Ihre Bestellung ist leer
+                </div>
+            </div>
+
+            <div class="cart-total">
+                <div class="total-row">
+                    <span>Anzahl Artikel:</span>
+                    <span id="totalItems">0</span>
+                </div>
+                <div class="order-number" id="orderNumberDisplay"></div>
+            </div>
+
+            <button class="order-btn" id="sendOrderBtn" disabled>✅ Bestellung aufgeben</button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    
     <!-- Gemini API -->
     <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
-    
+
     <script>
         // ===========================================
-        // 🔴 GEMINI KEY - ضع مفتاحك هنا
+        // 🔴 KONFIGURATION - HIER DEINE DATEN EINFÜGEN
         // ===========================================
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";
-        
+        const FIREBASE_CONFIG = {
+            apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
+            authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
+            projectId: "restaurantsysteme-eaff6",
+            storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
+            messagingSenderId: "891911663005",
+            appId: "1:891911663005:web:85672b40c90c158c2ad374"
+        };
+
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU"; // 🔴 DEIN GEMINI KEY
+
         // ===========================================
-        // 🔴 قائمة ثابتة مع IDs كنصوص
+        // Firebase initialisieren
         // ===========================================
-        const MENU_ITEMS = [
-            { id: "1", name: "Kookiesbecher" },
-            { id: "2", name: "Erdbeerbecher" },
-            { id: "3", name: "Spaghettieis" },
-            { id: "4", name: "Spagetti Erdbeer" },
-            { id: "5", name: "Spagetti kiwi" }
+        firebase.initializeApp(FIREBASE_CONFIG);
+        const db = firebase.firestore();
+
+        // ===========================================
+        // MENÜ (Hardcoded für Test)
+        // ===========================================
+        const MENU = [
+            { id: "1", name: "Kookiesbecher", category: "Becher" },
+            { id: "2", name: "Erdbeerbecher", category: "Becher" },
+            { id: "3", name: "Spaghettieis", category: "Eis" },
+            { id: "4", name: "Spagetti Erdbeer", category: "Eis" },
+            { id: "5", name: "Spagetti kiwi", category: "Eis" }
         ];
-        
+
         // ===========================================
         // State
         // ===========================================
         let currentOrder = [];
-        
-        // عرض القائمة على الشاشة
-        const menuList = MENU_ITEMS.map(item => item.name).join('\n');
-        document.getElementById('recognizedText').innerHTML = 
-            '<strong>📋 القائمة:</strong><br>' + menuList;
-        
+        let selectedTable = null;
+        let currentOrderNumber = null;
+        let chatSession = null;
+        let isRecording = false;
+        let recognition = null;
+
         // ===========================================
-        // Gemini function
+        // Gemini Chat initialisieren
         // ===========================================
-        async function askGemini(userText) {
+        async function initGeminiChat() {
             try {
-                // Menu als Text für Gemini
-                const menuText = MENU_ITEMS.map(item => 
-                    `- ${item.name} (ID: ${item.id})`
-                ).join('\n');
-                
-                const prompt = `
-Du bist ein Kellner in "Die Primel Eiscafé".
-Der Gast sagt: "${userText}"
-
-SPEISEKARTE:
-${menuText}
-
-Finde das passendste Gericht.
-Bestimme die Menge (standardmäßig 1).
-
-Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
-`;
-
-                updateDebug("🤔 Gemini denkt nach...");
-                
                 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
                 
-                const result = await model.generateContent(prompt);
+                // Menü als Text für Gemini
+                const menuText = MENU.map(item => `- ${item.name}`).join('\n');
+                
+                // Chat mit Verlauf starten
+                chatSession = model.startChat({
+                    history: [
+                        {
+                            role: "user",
+                            parts: [{ text: `Du bist ein freundlicher Kellner in 'Die Primel Eiscafé'. 
+                            Das ist unsere Speisekarte:
+                            ${menuText}
+                            
+                            Deine Aufgabe:
+                            1. Hilf dem Gast bei der Bestellung
+                            2. Verstehe was er möchte (auch wenn er die Namen falsch sagt)
+                            3. Wenn du sicher bist, frage: "Soll ich das bestellen?"
+                            4. Bei "Ja": Bestätige und frage "Möchten Sie noch etwas?"
+                            5. Bei "Nein": Frage "Was möchten Sie stattdessen?"
+                            6. Bei Antworten wie "Ja und noch...": Verstehe die zusätzliche Bestellung
+                            7. Sei freundlich und natürlich
+                            
+                            Wichtig: Antworte immer auf Deutsch, als wärst du ein echter Kellner.` }],
+                        },
+                        {
+                            role: "model",
+                            parts: [{ text: "Hallo! Ich bin Ihr Kellner. Was darf ich Ihnen heute bringen?" }],
+                        },
+                    ],
+                });
+                
+                console.log("✅ Gemini Chat bereit");
+                return true;
+            } catch (error) {
+                console.error("❌ Gemini Fehler:", error);
+                document.getElementById('assistantResponse').innerHTML = 
+                    "🤵 Entschuldigung, ich habe technische Probleme. Bitte versuchen Sie es später noch einmal.";
+                return false;
+            }
+        }
+
+        // ===========================================
+        // Nachricht an Gemini senden
+        // ===========================================
+        async function sendToGemini(userMessage) {
+            if (!chatSession) {
+                await initGeminiChat();
+            }
+            
+            try {
+                const result = await chatSession.sendMessage(userMessage);
                 const response = await result.response;
                 const text = response.text();
                 
-                // Clean JSON
-                const jsonText = text.replace(/```json|```/g, '').trim();
-                console.log("🤖 Gemini:", jsonText);
+                document.getElementById('assistantResponse').innerHTML = `🤵 ${text}`;
                 
-                return JSON.parse(jsonText);
+                // Gemini's Antwort analysieren
+                await analyzeGeminiResponse(text, userMessage);
                 
             } catch (error) {
                 console.error("❌ Gemini Fehler:", error);
-                updateDebug("❌ Gemini Fehler: " + error.message);
-                return null;
+                document.getElementById('assistantResponse').innerHTML = 
+                    "🤵 Entschuldigung, ich habe Sie nicht verstanden. Könnten Sie das bitte wiederholen?";
             }
         }
-        
+
         // ===========================================
-        // Process Order - مع تصحيح IDs
+        // Gemini's Antwort analysieren
         // ===========================================
-        async function processOrder(text) {
-            updateDebug(`🔍 Suche nach: "${text}"`);
+        async function analyzeGeminiResponse(response, userMessage) {
+            const lowerResponse = response.toLowerCase();
+            const lowerUserMessage = userMessage.toLowerCase();
             
-            const result = await askGemini(text);
+            // Prüfen ob Gemini eine Bestellung bestätigt hat
+            if (lowerResponse.includes("soll ich das bestellen") || 
+                lowerResponse.includes("ist das richtig")) {
+                // Gemini fragt nach Bestätigung
+                return;
+            }
             
-            if (result && result.id) {
-                // 🔴 المشكلة هنا: Gemini قد يرجع ID كرقم أو نص
-                updateDebug(`🤖 Gemini sagt: ID=${result.id}, Menge=${result.menge}`);
-                
-                // 🔴 الحل: نحول الكل لنص للمقارنة
-                const item = MENU_ITEMS.find(i => String(i.id) === String(result.id));
-                
-                if (item) {
-                    updateDebug(`✅ Gefunden: ${item.name} (ID: ${item.id})`);
-                    
-                    for (let i = 0; i < (result.menge || 1); i++) {
-                        addToOrder(item.id, item.name);
-                    }
-                    
-                    document.getElementById('recognizedText').innerHTML = 
-                        `✅ "${text}"<br><small>${item.name} x${result.menge || 1}</small>`;
-                } else {
-                    updateDebug(`❌ Kein Item mit ID ${result.id} gefunden`);
-                    document.getElementById('recognizedText').innerHTML = 
-                        `❌ "${text}"<br><small>Gericht mit ID ${result.id} nicht gefunden</small>`;
-                    
-                    // عرض ال IDs المتاحة للمساعدة
-                    const availableIds = MENU_ITEMS.map(i => `${i.name} (${i.id})`).join(', ');
-                    updateDebug(`Verfügbare IDs: ${availableIds}`);
-                }
+            // Prüfen ob der Gast zugestimmt hat
+            if (lowerUserMessage.includes("ja") || lowerUserMessage.includes("genau")) {
+                // Versuche die Bestellung aus der vorherigen Antwort zu extrahieren
+                // In einer echten Implementierung würden wir hier den Kontext analysieren
+                // Für jetzt: Einfache Demo
+            }
+            
+            // Prüfen ob der Gast abgelehnt hat
+            if (lowerUserMessage.includes("nein") || lowerUserMessage.includes("falsch")) {
+                // Gemini wird nachfragen
+                return;
+            }
+        }
+
+        // ===========================================
+        // Tisch-Auswahl
+        // ===========================================
+        function generateTableButtons() {
+            const grid = document.getElementById('tableGrid');
+            let html = '';
+            
+            for (let i = 1; i <= 20; i++) {
+                html += `<button class="table-btn" onclick="selectTable(${i})">${i}</button>`;
+            }
+            
+            grid.innerHTML = html;
+        }
+
+        window.selectTable = function(tableNumber) {
+            selectedTable = tableNumber;
+            document.getElementById('takeawayBtn').classList.remove('selected');
+            document.querySelectorAll('.table-btn').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+            document.getElementById('tableInfo').innerHTML = `Tisch ${tableNumber}`;
+            checkOrderButton();
+        };
+
+        document.getElementById('takeawayBtn').addEventListener('click', function() {
+            selectedTable = 'takeaway';
+            this.classList.add('selected');
+            document.querySelectorAll('.table-btn').forEach(btn => btn.classList.remove('selected'));
+            document.getElementById('tableInfo').innerHTML = '🥡 Takeaway';
+            checkOrderButton();
+        });
+
+        // ===========================================
+        // Warenkorb Funktionen
+        // ===========================================
+        function addToCart(itemName) {
+            const existingItem = currentOrder.find(item => item.name === itemName);
+            
+            if (existingItem) {
+                existingItem.quantity++;
             } else {
-                updateDebug(`❌ Gemini konnte kein Gericht zuordnen`);
-                document.getElementById('recognizedText').innerHTML = 
-                    `❌ "${text}"<br><small>Kein passendes Gericht</small>`;
-            }
-        }
-        
-        // ===========================================
-        // Debug Funktion
-        // ===========================================
-        function updateDebug(msg) {
-            document.getElementById('debugInfo').innerHTML = msg;
-            console.log(msg);
-        }
-        
-        // ===========================================
-        // Order Management
-        // ===========================================
-        function addToOrder(itemId, itemName) {
-            currentOrder.push({
-                id: itemId,
-                name: itemName,
-                orderId: Date.now() + Math.random()
-            });
-            updateOrderDisplay();
-        }
-        
-        function removeFromOrder(index) {
-            currentOrder.splice(index, 1);
-            updateOrderDisplay();
-        }
-        
-        function updateOrderDisplay() {
-            const section = document.getElementById('orderSection');
-            const list = document.getElementById('orderList');
-            const total = document.getElementById('totalItems');
-            
-            if (currentOrder.length > 0) {
-                section.style.display = 'block';
-                
-                let html = '';
-                currentOrder.forEach((item, i) => {
-                    html += `
-                        <div class="order-item">
-                            <span>${item.name}</span>
-                            <button class="delete-btn" onclick="removeFromOrder(${i})">✕</button>
-                        </div>
-                    `;
+                currentOrder.push({
+                    name: itemName,
+                    quantity: 1
                 });
+            }
+            
+            updateCartDisplay();
+        }
+
+        function removeFromCart(index) {
+            currentOrder.splice(index, 1);
+            updateCartDisplay();
+        }
+
+        function updateCartDisplay() {
+            const cartDiv = document.getElementById('cartItems');
+            const totalSpan = document.getElementById('totalItems');
+            
+            if (currentOrder.length === 0) {
+                cartDiv.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;">Ihre Bestellung ist leer</div>';
+                totalSpan.textContent = '0';
+                return;
+            }
+            
+            let html = '';
+            let total = 0;
+            
+            currentOrder.forEach((item, index) => {
+                total += item.quantity;
+                html += `
+                    <div class="cart-item">
+                        <div class="cart-item-info">
+                            <div class="cart-item-name">${item.name}</div>
+                            <div class="cart-item-quantity">${item.quantity}x</div>
+                        </div>
+                        <button class="cart-item-remove" onclick="removeFromCart(${index})">✕</button>
+                    </div>
+                `;
+            });
+            
+            cartDiv.innerHTML = html;
+            totalSpan.textContent = total;
+        }
+
+        window.removeFromCart = removeFromCart;
+
+        // ===========================================
+        // Bestellung absenden
+        // ===========================================
+        async function sendOrder() {
+            if (!selectedTable || currentOrder.length === 0) return;
+            
+            const orderNumber = Math.floor(Math.random() * 9000) + 1000;
+            
+            const orderData = {
+                table: selectedTable === 'takeaway' ? 'Takeaway' : `Tisch ${selectedTable}`,
+                orderNumber: orderNumber,
+                items: currentOrder,
+                status: 'pending',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                totalItems: currentOrder.reduce((sum, item) => sum + item.quantity, 0)
+            };
+            
+            try {
+                await db.collection('orders').add(orderData);
                 
-                list.innerHTML = html;
-                total.textContent = currentOrder.length;
-            } else {
-                section.style.display = 'none';
+                document.getElementById('orderNumberDisplay').innerHTML = 
+                    `Bestellnummer: #${orderNumber}`;
+                
+                // Bestellung leeren
+                currentOrder = [];
+                updateCartDisplay();
+                
+                // Kellner informieren
+                document.getElementById('assistantResponse').innerHTML = 
+                    `🤵 Vielen Dank! Ihre Bestellung #${orderNumber} wurde an die Küche weitergeleitet.`;
+                
+                document.getElementById('sendOrderBtn').disabled = true;
+                
+            } catch (error) {
+                console.error("Fehler beim Bestellen:", error);
+                alert("Fehler beim Aufgeben der Bestellung");
             }
         }
-        
+
+        function checkOrderButton() {
+            const btn = document.getElementById('sendOrderBtn');
+            btn.disabled = !(selectedTable && currentOrder.length > 0);
+        }
+
         // ===========================================
         // Speech Recognition
         // ===========================================
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        let recognition = null;
-        let isRecording = false;
-        
+
         if (SpeechRecognition) {
             recognition = new SpeechRecognition();
             recognition.lang = 'de-DE';
@@ -322,11 +718,11 @@ Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
                 isRecording = true;
                 micBtn.classList.add('recording');
                 document.getElementById('recognizedText').innerHTML = '🎤 Höre zu...';
-                updateDebug('🎤 Höre zu...');
             };
             
             recognition.onresult = function(event) {
                 let finalText = '';
+                
                 for (let i = 0; i < event.results.length; i++) {
                     if (event.results[i].isFinal) {
                         finalText = event.results[i][0].transcript;
@@ -334,7 +730,10 @@ Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
                 }
                 
                 if (finalText) {
-                    processOrder(finalText);
+                    document.getElementById('recognizedText').innerHTML = `"${finalText}"`;
+                    
+                    // An Gemini senden
+                    sendToGemini(finalText);
                 }
             };
             
@@ -343,34 +742,38 @@ Antworte NUR mit JSON: {"id": "die-id", "menge": zahl}
                 stopRecording();
             };
             
-            recognition.onend = stopRecording;
+            recognition.onend = function() {
+                stopRecording();
+            };
         }
-        
+
         function startRecording() {
-            if (recognition && !isRecording) recognition.start();
+            if (recognition && !isRecording) {
+                recognition.start();
+            }
         }
-        
+
         function stopRecording() {
             isRecording = false;
             micBtn.classList.remove('recording');
         }
-        
+
         // ===========================================
+        // Initialisierung
+        // ===========================================
+        async function init() {
+            generateTableButtons();
+            await initGeminiChat();
+        }
+
+        init();
+
         // Event Listeners
-        // ===========================================
         document.getElementById('micBtn').addEventListener('click', startRecording);
         document.getElementById('sendOrderBtn').addEventListener('click', sendOrder);
-        
-        window.addToOrder = addToOrder;
-        window.removeFromOrder = removeFromOrder;
-        
-        // Send Order function
-        async function sendOrder() {
-            if (currentOrder.length === 0) return;
-            alert('✅ Bestellung aufgegeben!');
-            currentOrder = [];
-            updateOrderDisplay();
-        }
+
+        // Für Cart Updates
+        window.addToCart = addToCart;
     </script>
 </body>
 </html>
