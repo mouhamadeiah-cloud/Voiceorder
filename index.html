@@ -239,13 +239,19 @@
         }
         
         .checkmark { font-size: 48px; color: #48bb78; }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #667eea;
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <div class="container">
-            <h1>🍽️ Bestellassistent</h1>
-            <div class="subtitle">Sagen Sie einfach, was Sie möchten</div>
+            <h1>🍽️ KI Bestellassistent</h1>
+            <div class="subtitle">Einfach sagen was Sie möchten - KI versteht alles</div>
         </div>
     </div>
     
@@ -253,7 +259,7 @@
         <!-- Voice Input -->
         <div class="voice-section">
             <button class="mic-button" id="micBtn">🎤</button>
-            <p>Tippen Sie auf das Mikrofon und sagen Sie Ihre Bestellung</p>
+            <p>Tippen Sie auf das Mikrofon und sprechen Sie Ihre Bestellung</p>
             <div class="recognized-text" id="recognizedText">
                 <span>👆</span> Hier erscheint Ihre Bestellung
             </div>
@@ -270,8 +276,8 @@
             <button class="send-btn" id="sendOrderBtn">✅ Bestellung aufgeben</button>
         </div>
         
-        <!-- Menu Container -->
-        <div id="menuContainer"></div>
+        <!-- Menu Container (wird von Firebase geladen) -->
+        <div id="menuContainer" class="loading">Menü wird geladen...</div>
     </div>
     
     <!-- Success Modal -->
@@ -293,20 +299,25 @@
     
     <script>
         // ===========================================
-        // Firebase Config
+        // Firebase Config - HIER DEINE DATEN EINFÜGEN
         // ===========================================
-        const firebaseConfig = {
-            apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
-            authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
-            databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "restaurantsysteme-eaff6",
-            storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
-            messagingSenderId: "891911663005",
-            appId: "1:891911663005:web:85672b40c90c158c2ad374"
-        };
+const firebaseConfig = {
+  apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
+  authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
+  databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "restaurantsysteme-eaff6",
+  storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
+  messagingSenderId: "891911663005",
+  appId: "1:891911663005:web:85672b40c90c158c2ad374"
+};
         
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        
+        // ===========================================
+        // GEMINI API - DEINEN KEY HIER EINFÜGEN
+        // ===========================================
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- DEIN ECHTER KEY
         
         // ===========================================
         // State
@@ -323,42 +334,21 @@
         // ===========================================
         async function loadMenuData() {
             try {
-                // Load categories
-                const categoriesSnapshot = await db.collection('categories').get();
-                categories = categoriesSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                const [categoriesSnap, extrasSnap, itemsSnap] = await Promise.all([
+                    db.collection('categories').get(),
+                    db.collection('extras').get(),
+                    db.collection('items').where('active', '==', true).get()
+                ]);
                 
-                // Load extras
-                const extrasSnapshot = await db.collection('extras').get();
-                extras = extrasSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                
-                // Load items
-                const itemsSnapshot = await db.collection('items').where('active', '==', true).get();
-                menuItems = itemsSnapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-                
-                console.log('✅ Daten geladen:', {
-                    kategorien: categories.length,
-                    gerichte: menuItems.length,
-                    extras: extras.length
-                });
+                categories = categoriesSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                extras = extrasSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                menuItems = itemsSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
                 displayMenu();
                 
             } catch (error) {
-                console.error('❌ Fehler beim Laden:', error);
-                document.getElementById('menuContainer').innerHTML = `
-                    <div class="menu-section">
-                        <div class="empty-state">Fehler beim Laden des Menüs</div>
-                    </div>
-                `;
+                console.error('Fehler:', error);
+                document.getElementById('menuContainer').innerHTML = '<div class="empty-state">Fehler beim Laden</div>';
             }
         }
         
@@ -369,41 +359,28 @@
             const container = document.getElementById('menuContainer');
             
             if (menuItems.length === 0) {
-                container.innerHTML = `
-                    <div class="menu-section">
-                        <div class="empty-state">Keine Gerichte verfügbar</div>
-                    </div>
-                `;
+                container.innerHTML = '<div class="empty-state">Keine Gerichte verfügbar</div>';
                 return;
             }
             
-            // Group items by category
+            // Group by category
             const itemsByCategory = {};
             menuItems.forEach(item => {
                 const catId = item.categoryId || 'default';
-                if (!itemsByCategory[catId]) {
-                    itemsByCategory[catId] = [];
-                }
+                if (!itemsByCategory[catId]) itemsByCategory[catId] = [];
                 itemsByCategory[catId].push(item);
             });
             
             let html = '';
-            
             categories.forEach(category => {
                 const catItems = itemsByCategory[category.id] || [];
                 if (catItems.length === 0) return;
                 
-                html += `
-                    <div class="menu-section">
-                        <h2>${category.name}</h2>
-                `;
+                html += `<div class="menu-section"><h2>${category.name}</h2>`;
                 
                 catItems.forEach(item => {
                     const itemExtras = (item.extras || [])
-                        .map(extraId => {
-                            const extra = extras.find(e => e.id === extraId);
-                            return extra ? extra.name : null;
-                        })
+                        .map(id => extras.find(e => e.id === id)?.name)
                         .filter(e => e);
                     
                     html += `
@@ -412,20 +389,14 @@
                                 <span class="item-name">${item.displayName || item.name}</span>
                                 <span class="item-price">€${(item.price || 0).toFixed(2)}</span>
                             </div>
-                    `;
-                    
-                    if (itemExtras.length > 0) {
-                        html += `
-                            <div class="item-extras">
-                                <div class="extras-title">Zutaten:</div>
-                                <div class="extras-list">
-                                    ${itemExtras.map(e => `<span class="extra-tag">${e}</span>`).join('')}
+                            ${itemExtras.length ? `
+                                <div class="item-extras">
+                                    <div class="extras-title">Zutaten:</div>
+                                    <div class="extras-list">
+                                        ${itemExtras.map(e => `<span class="extra-tag">${e}</span>`).join('')}
+                                    </div>
                                 </div>
-                            </div>
-                        `;
-                    }
-                    
-                    html += `
+                            ` : ''}
                             <button class="add-btn" onclick="addToOrder('${item.id}')">+ Hinzufügen</button>
                         </div>
                     `;
@@ -438,173 +409,103 @@
         }
         
         // ===========================================
-        // GEMINI API - DEIN API KEY
+        // GEMINI - VERSTEHT ALLES! (Keine Filterung mehr)
         // ===========================================
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // <-- HIER DEINEN ECHTEN KEY EINFÜGEN
-        
-        // ===========================================
-        // Extract order with Gemini AI (KORRIGIERT)
-        // ===========================================
-        async function extractOrderWithGemini(text) {
-            if (!GEMINI_API_KEY || GEMINI_API_KEY === "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU") {
-                console.warn("⚠️ Kein gültiger Gemini API Key - verwende einfache Filterung");
-                return extractOrderSimple(text);
-            }
-            
+        async function understandWithGemini(text) {
             try {
-                // Prepare menu list for Gemini
-                const menuList = menuItems.map(item => item.name).join(', ');
+                // Erstelle eine Liste aller Gerichte mit ID
+                const menuList = menuItems.map(item => 
+                    `- ${item.name} (ID: ${item.id})`
+                ).join('\n');
                 
                 const prompt = `
-Du bist ein KI-Assistent für ein Restaurant. 
+Du bist ein KI-Assistent für ein Restaurant.
 Der Kunde sagt: "${text}"
-Verfügbare Gerichte: ${menuList}
 
-Extrahiere die Bestellung. Gib NUR ein JSON-Array zurück, mit diesem Format:
-[{"item": "Gerichtsname", "quantity": zahl}]
+Verfügbare Gerichte:
+${menuList}
 
-Beispiel: Für "zweimal Pizza und einmal Cola" -> [{"item": "Pizza", "quantity": 2}, {"item": "Cola", "quantity": 1}]
+Aufgabe:
+1. Verstehe was der Kunde bestellen möchte
+2. Finde die passenden Gerichte aus der Liste
+3. Bestimme die Menge (falls nicht genannt, nimm 1)
+
+Antworte NUR mit einem JSON-Array:
+[{"id": "GERICHT_ID", "quantity": ZAHL}]
+
+Beispiel: Für "zweimal Pizza und einmal Cola" -> [{"id": "pizza123", "quantity": 2}, {"id": "cola456", "quantity": 1}]
 
 Wichtig: 
-- Verwende exakt die Gerichtenamen aus der Liste
-- Wenn keine Menge genannt wird, nimm 1
-- Antworte NUR mit dem JSON, kein anderer Text
+- Verwende die exakten IDs aus der Liste
+- Kein anderer Text, nur JSON
 `;
                 
-                // >>> KORREKT: Hier den API Key verwenden <<<
                 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
                 
                 const result = await model.generateContent(prompt);
                 const response = await result.response;
-                const jsonText = response.text();
+                const jsonText = response.text().replace(/```json|```/g, '').trim();
                 
-                // Clean JSON (remove markdown if present)
-                const cleanJson = jsonText.replace(/```json|```/g, '').trim();
-                const extracted = JSON.parse(cleanJson);
+                const extracted = JSON.parse(jsonText);
                 
-                // Convert to our format
-                const pairs = [];
-                extracted.forEach(item => {
-                    const menuItem = menuItems.find(m => 
-                        m.name.toLowerCase().includes(item.item.toLowerCase())
-                    );
-                    if (menuItem) {
-                        pairs.push({
-                            id: menuItem.id,
-                            name: menuItem.name,
-                            displayName: menuItem.displayName || menuItem.name,
-                            extras: menuItem.extras || [],
-                            quantity: item.quantity || 1
-                        });
-                    }
-                });
-                
-                console.log('🤖 Gemini erkannt:', pairs);
-                return pairs;
+                // Konvertiere zu unserem Format
+                return extracted.map(item => {
+                    const menuItem = menuItems.find(m => m.id === item.id);
+                    if (!menuItem) return null;
+                    
+                    return {
+                        id: menuItem.id,
+                        name: menuItem.displayName || menuItem.name,
+                        quantity: item.quantity || 1,
+                        extras: (menuItem.extras || []).map(id => extras.find(e => e.id === id)?.name).filter(e => e)
+                    };
+                }).filter(i => i !== null);
                 
             } catch (error) {
-                console.error('❌ Gemini Fehler:', error);
-                // Fallback to simple filtering
-                return extractOrderSimple(text);
+                console.error('Gemini Fehler:', error);
+                return [];
             }
         }
         
         // ===========================================
-        // Simple fallback extraction (if Gemini fails)
-        // ===========================================
-        function extractOrderSimple(text) {
-            text = text.toLowerCase().replace(/[.,!?;:]/g, '');
-            let words = text.split(/\s+/);
-            
-            // Simple quantity words
-            const quantityWords = {
-                'einmal': 1, 'ein': 1, 'eine': 1, 'einen': 1, 'eins': 1,
-                'zweimal': 2, 'zwei': 2,
-                'dreimal': 3, 'drei': 3,
-                'viermal': 4, 'vier': 4,
-                'fünfmal': 5, 'fünf': 5
-            };
-            
-            let pairs = [];
-            let currentQuantity = 1;
-            
-            for (let word of words) {
-                // Check for quantity word
-                if (quantityWords[word]) {
-                    currentQuantity = quantityWords[word];
-                    continue;
-                }
-                
-                // Check for menu item
-                for (let item of menuItems) {
-                    if (item.keywords && item.keywords.includes(word)) {
-                        pairs.push({
-                            id: item.id,
-                            name: item.name,
-                            displayName: item.displayName || item.name,
-                            extras: item.extras || [],
-                            quantity: currentQuantity
-                        });
-                        currentQuantity = 1;
-                        break;
-                    }
-                }
-            }
-            
-            return pairs;
-        }
-        
-        // ===========================================
-        // Process Order Text
+        // Process Order (Nur Gemini, keine Filter)
         // ===========================================
         async function processOrderText(text) {
             if (text === lastProcessedText) return;
             lastProcessedText = text;
             
             document.getElementById('recognizedText').innerHTML = 
-                `<span>🤖</span> "${text}"<br><small>Analysiere mit KI...</small>`;
+                `<span>🤖</span> KI analysiert: "${text}"...`;
             
-            // Use Gemini to extract order
-            let pairs = await extractOrderWithGemini(text);
+            const items = await understandWithGemini(text);
             
-            if (pairs.length > 0) {
-                pairs.forEach(pair => {
-                    for (let i = 0; i < pair.quantity; i++) {
-                        addToOrder(pair.id);
+            if (items.length > 0) {
+                items.forEach(item => {
+                    for (let i = 0; i < item.quantity; i++) {
+                        addToOrder(item.id, item.name, item.extras);
                     }
                 });
                 
-                let foundText = pairs.map(p => p.displayName + ' (x' + p.quantity + ')').join(', ');
+                const foundText = items.map(i => i.name + ' (x' + i.quantity + ')').join(', ');
                 document.getElementById('recognizedText').innerHTML = 
                     `<span>✅</span> "${text}"<br><small>Gefunden: ${foundText}</small>`;
             } else {
                 document.getElementById('recognizedText').innerHTML = 
-                    `<span>❌</span> "${text}"<br><small>Keine Gerichte erkannt</small>`;
+                    `<span>❌</span> "${text}"<br><small>Nichts erkannt</small>`;
             }
         }
         
         // ===========================================
-        // Order Management
+        // Order Management (einfach)
         // ===========================================
-        function addToOrder(itemId) {
-            const item = menuItems.find(i => i.id === itemId);
-            if (!item) return;
-            
-            const itemExtras = (item.extras || [])
-                .map(extraId => {
-                    const extra = extras.find(e => e.id === extraId);
-                    return extra ? extra.name : null;
-                })
-                .filter(e => e);
-            
+        function addToOrder(itemId, displayName, extras) {
             currentOrder.push({
-                id: item.id,
-                displayName: item.displayName || item.name,
-                extras: itemExtras,
+                id: itemId,
+                name: displayName,
+                extras: extras || [],
                 orderId: Date.now() + Math.random()
             });
-            
             updateOrderDisplay();
         }
         
@@ -614,56 +515,50 @@ Wichtig:
         }
         
         function updateOrderDisplay() {
-            const orderSection = document.getElementById('orderSection');
-            const orderList = document.getElementById('orderList');
-            const totalItems = document.getElementById('totalItems');
+            const section = document.getElementById('orderSection');
+            const list = document.getElementById('orderList');
+            const total = document.getElementById('totalItems');
             
             if (currentOrder.length > 0) {
-                orderSection.style.display = 'block';
+                section.style.display = 'block';
                 
                 let html = '';
-                currentOrder.forEach((item, index) => {
-                    let extrasHtml = '';
-                    if (item.extras && item.extras.length > 0) {
-                        extrasHtml = `<div class="order-item-extras">Mit: ${item.extras.join(', ')}</div>`;
-                    }
+                currentOrder.forEach((item, i) => {
+                    const extrasHtml = item.extras.length ? 
+                        `<div class="order-item-extras">Mit: ${item.extras.join(', ')}</div>` : '';
                     
                     html += `
                         <div class="order-item">
                             <div class="order-item-info">
-                                <div class="order-item-name">${item.displayName}</div>
+                                <div class="order-item-name">${item.name}</div>
                                 ${extrasHtml}
                             </div>
                             <div class="order-item-actions">
-                                <button class="delete-btn" onclick="removeFromOrder(${index})">✕</button>
+                                <button class="delete-btn" onclick="removeFromOrder(${i})">✕</button>
                             </div>
                         </div>
                     `;
                 });
                 
-                orderList.innerHTML = html;
-                totalItems.textContent = currentOrder.length + ' Artikel';
+                list.innerHTML = html;
+                total.textContent = currentOrder.length + ' Artikel';
             } else {
-                orderSection.style.display = 'none';
+                section.style.display = 'none';
             }
         }
         
         // ===========================================
-        // Send Order
+        // Send Order to Firebase
         // ===========================================
         async function sendOrder() {
-            if (currentOrder.length === 0) {
-                alert("Keine Artikel in der Bestellung");
-                return;
-            }
+            if (currentOrder.length === 0) return alert("Keine Artikel");
             
             try {
-                // Group similar items
-                let grouped = {};
+                const grouped = {};
                 currentOrder.forEach(item => {
                     if (!grouped[item.id]) {
                         grouped[item.id] = {
-                            name: item.displayName,
+                            name: item.name,
                             quantity: 1,
                             extras: item.extras
                         };
@@ -677,8 +572,7 @@ Wichtig:
                     tableNumber: 1,
                     status: 'pending',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                    orderNumber: Math.floor(Math.random() * 9000) + 1000,
-                    totalItems: currentOrder.length
+                    orderNumber: Math.floor(Math.random() * 9000) + 1000
                 });
                 
                 currentOrder = [];
@@ -686,7 +580,6 @@ Wichtig:
                 document.getElementById('successModal').classList.add('active');
                 
             } catch (error) {
-                console.error('❌ Fehler:', error);
                 alert('Fehler: ' + error.message);
             }
         }
@@ -708,59 +601,42 @@ Wichtig:
                 isRecording = true;
                 micBtn.classList.add('recording');
                 document.getElementById('recognizedText').innerHTML = '🎤 Höre zu...';
-                lastProcessedText = '';
             };
             
             recognition.onresult = function(event) {
-                let finalTranscript = '';
-                let interimTranscript = '';
+                let final = '', interim = '';
                 
                 for (let i = 0; i < event.results.length; i++) {
-                    const result = event.results[i];
-                    if (result.isFinal) {
-                        finalTranscript = result[0].transcript;
+                    if (event.results[i].isFinal) {
+                        final = event.results[i][0].transcript;
                     } else {
-                        interimTranscript += result[0].transcript;
+                        interim += event.results[i][0].transcript;
                     }
                 }
                 
-                if (interimTranscript) {
+                if (interim) {
                     document.getElementById('recognizedText').innerHTML = 
-                        `<span>🎤</span> "${interimTranscript}"<br><small>Höre zu...</small>`;
+                        `<span>🎤</span> "${interim}"<br><small>Höre zu...</small>`;
                 }
                 
-                if (finalTranscript && finalTranscript !== lastProcessedText) {
-                    lastProcessedText = finalTranscript;
+                if (final && final !== lastProcessedText) {
+                    lastProcessedText = final;
                     
-                    if (processingTimeout) {
-                        clearTimeout(processingTimeout);
-                    }
-                    
-                    processingTimeout = setTimeout(() => {
-                        processOrderText(finalTranscript);
-                        processingTimeout = null;
-                    }, 500);
+                    clearTimeout(processingTimeout);
+                    processingTimeout = setTimeout(() => processOrderText(final), 500);
                 }
             };
             
-            recognition.onerror = function() {
-                document.getElementById('recognizedText').innerHTML = 
-                    '<span>❌</span> Fehler beim Hören';
+            recognition.onerror = () => {
+                document.getElementById('recognizedText').innerHTML = '<span>❌</span> Fehler beim Hören';
                 stopRecording();
             };
             
-            recognition.onend = function() {
-                stopRecording();
-            };
-        } else {
-            document.getElementById('recognizedText').innerHTML = 
-                '<span>❌</span> Ihr Browser unterstützt keine Spracheingabe';
+            recognition.onend = stopRecording;
         }
         
         function startRecording() {
-            if (recognition && !isRecording) {
-                recognition.start();
-            }
+            if (recognition && !isRecording) recognition.start();
         }
         
         function stopRecording() {
@@ -773,15 +649,13 @@ Wichtig:
         }
         
         // ===========================================
-        // Initialize
+        // Start
         // ===========================================
         loadMenuData();
         
-        // Event Listeners
         document.getElementById('micBtn').addEventListener('click', startRecording);
         document.getElementById('sendOrderBtn').addEventListener('click', sendOrder);
         
-        // Global functions
         window.addToOrder = addToOrder;
         window.removeFromOrder = removeFromOrder;
         window.closeModal = closeModal;
