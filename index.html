@@ -8,14 +8,13 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
         .app-container { display: flex; width: 100%; }
         .kristina-section { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #222; padding: 20px; }
-        .vibe { width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, var(--accent) 0%, transparent 70%); margin-bottom: 20px; }
-        .vibe.listening { animation: pulse 1s infinite; background: radial-gradient(circle, #ff4d4d 0%, transparent 70%); }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .chat-bubble { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid #333; width: 80%; text-align: center; font-size: 1.3rem; min-height: 80px; }
-        .mic-btn { background: var(--accent); border: none; padding: 15px 40px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-top: 20px; color: black; font-size: 1.1rem; }
-        .basket-section { flex: 1; background: var(--card); padding: 20px; border-left: 1px solid #222; }
-        .order-item { background: #1a1a1a; padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--accent); border-radius: 8px; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .vibe { width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, var(--accent) 0%, transparent 70%); margin-bottom: 20px; transition: 0.3s; }
+        .vibe.active { transform: scale(1.1); box-shadow: 0 0 50px rgba(212, 175, 55, 0.4); }
+        .chat-bubble { background: var(--card); padding: 25px; border-radius: 15px; border: 1px solid #333; width: 80%; text-align: center; font-size: 1.4rem; min-height: 80px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .mic-btn { background: var(--accent); border: none; padding: 15px 45px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-top: 25px; color: black; font-size: 1.2rem; }
+        .basket-section { flex: 1; background: var(--card); padding: 20px; display: flex; flex-direction: column; }
+        .order-item { background: #1a1a1a; padding: 15px; margin-bottom: 10px; border-left: 4px solid var(--accent); border-radius: 8px; font-weight: bold; }
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 1000; }
     </style>
 </head>
 <body>
@@ -24,7 +23,7 @@
         <div style="text-align:center; background:#1a1a1a; padding:40px; border-radius:20px; border:1px solid var(--accent);">
             <h2 style="color:var(--accent)">Eiscafé Voice</h2>
             <p>Tischnummer:</p>
-            <input type="number" id="tischInput" value="1" style="padding:10px; font-size:1.5rem; width:60px; text-align:center;">
+            <input type="number" id="tischInput" value="1" style="padding:10px; font-size:1.5rem; width:60px; text-align:center; background: black; color: white; border: 1px solid var(--accent);">
             <br><br>
             <button class="mic-btn" onclick="initApp()">Starten</button>
         </div>
@@ -33,15 +32,16 @@
     <div class="app-container">
         <main class="kristina-section">
             <div id="vibe" class="vibe"></div>
-            <div id="status" style="color:var(--accent); margin-bottom:10px;">Bereit</div>
-            <div id="kristina-text" class="chat-bubble">Hallo! Ich bin Kristina. Was darf ich Ihnen bringen?</div>
+            <div id="status" style="color:var(--accent); margin-bottom:10px; font-weight: bold;">BEREIT</div>
+            <div id="kristina-text" class="chat-bubble">Hallo! Ich bin Kristina. Was darf ich Ihnen heute bringen?</div>
             <button class="mic-btn" id="micBtn">🎤 Sprechen</button>
         </main>
 
         <aside class="basket-section">
             <h2 style="border-bottom: 2px solid var(--accent); padding-bottom:10px;">Warenkorb</h2>
             <div id="tisch-display" style="color:var(--accent); font-weight:bold; margin-bottom:20px;">Tisch: -</div>
-            <div id="cart-container"></div>
+            <div id="cart-container" style="flex-grow: 1; overflow-y: auto;"></div>
+            <button class="mic-btn" style="background: #28a745; color: white; width: 100%;" onclick="sendToKitchen()">Bestellung abschließen</button>
         </aside>
     </div>
 
@@ -53,7 +53,11 @@
         
         let chatContext = [{
             role: "user",
-            parts: [{ text: `Du bist Kristina, eine Kellnerin. Menü: ${MENU}. Antworte kurz auf Deutsch. Wenn der Gast fertig ist, fasse alles zusammen. Wenn er bestätigt, schreibe 'BESTELLUNG_OK:' gefolgt von der Liste.` }]
+            parts: [{ text: `Du bist Kristina, eine freundliche Kellnerin. Menü: ${MENU}. 
+            REGELE:
+            1. Antworte immer auf Deutsch.
+            2. Wenn der Gast etwas bestellt, bestätige es kurz.
+            3. Wenn der Gast sagt "das ist alles" oder "OK", fasse die Bestellung zusammen und füge am Ende EXAKT diesen Text hinzu: [CONFIRM_ORDER]` }]
         }];
 
         function initApp() {
@@ -61,27 +65,33 @@
             document.getElementById('tischModal').style.display = 'none';
         }
 
+        // إعداد الصوت (نطق كريستينا)
+        function speak(text) {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = 'de-DE';
+            window.speechSynthesis.speak(utterance);
+        }
+
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.lang = 'de-DE';
 
         document.getElementById('micBtn').addEventListener('click', () => {
             recognition.start();
-            document.getElementById('vibe').classList.add('listening');
-            document.getElementById('status').innerText = "Kristina hört...";
+            document.getElementById('vibe').classList.add('active');
+            document.getElementById('status').innerText = "KRISTINA HÖRT...";
         });
 
         recognition.onresult = async (event) => {
             const text = event.results[0][0].transcript;
-            document.getElementById('vibe').classList.remove('listening');
+            document.getElementById('vibe').classList.remove('active');
             document.getElementById('kristina-text').innerText = "... " + text;
             await callGemini(text);
         };
 
         async function callGemini(userInput) {
             chatContext.push({ role: "user", parts: [{ text: userInput }] });
-            document.getElementById('status').innerText = "Kristina denkt nach...";
+            document.getElementById('status').innerText = "KRISTINA DENKT NACH...";
 
-            // 🛠️ تم تعديل الرابط والموديل ليعمل مع النسخة المجانية المستقرة
             const url = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`;
 
             try {
@@ -92,31 +102,36 @@
                 });
 
                 const data = await response.json();
+                const aiResponse = data.candidates[0].content.parts[0].text;
                 
-                if (data.candidates && data.candidates[0].content) {
-                    const aiText = data.candidates[0].content.parts[0].text;
-                    chatContext.push({ role: "model", parts: [{ text: aiText }] });
-                    
-                    if (aiText.includes("BESTELLUNG_OK:")) {
-                        const order = aiText.split("BESTELLUNG_OK:")[1].trim();
-                        addToBasket(order);
-                        document.getElementById('kristina-text').innerText = "Perfekt, ist notiert!";
-                    } else {
-                        document.getElementById('kristina-text').innerText = aiText;
-                    }
+                chatContext.push({ role: "model", parts: [{ text: aiResponse }] });
+
+                // عرض النص ونطقه
+                let displayText = aiResponse.replace("[CONFIRM_ORDER]", "").trim();
+                document.getElementById('kristina-text').innerText = displayText;
+                speak(displayText);
+
+                if (aiResponse.includes("[CONFIRM_ORDER]")) {
+                    addToBasket(displayText);
                 }
-                document.getElementById('status').innerText = "Bereit";
+                
+                document.getElementById('status').innerText = "BEREIT";
             } catch (err) {
-                document.getElementById('kristina-text').innerText = "Fehler: Bitte API Key prüfen.";
+                document.getElementById('status').innerText = "FEHLER";
                 console.error(err);
             }
         }
 
-        function addToBasket(order) {
+        function addToBasket(summary) {
+            const container = document.getElementById('cart-container');
             const div = document.createElement('div');
             div.className = 'order-item';
-            div.innerText = order;
-            document.getElementById('cart-container').appendChild(div);
+            div.innerText = summary;
+            container.appendChild(div);
+        }
+
+        function sendToKitchen() {
+            alert("Bestellung gesendet!");
         }
     </script>
 </body>
