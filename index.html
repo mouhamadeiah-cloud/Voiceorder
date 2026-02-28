@@ -83,9 +83,6 @@
             font-weight: 600;
             color: #8B4513;
             margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
         
         .table-grid {
@@ -105,21 +102,15 @@
             font-weight: 600;
             color: #8B4513;
             cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .table-btn:hover {
             border-color: #8B4513;
-            background: #f8f0e8;
         }
         
         .table-btn.selected {
             background: #8B4513;
             color: white;
-            border-color: #8B4513;
         }
         
         .takeaway-btn {
@@ -132,7 +123,6 @@
             font-weight: 600;
             color: #8B4513;
             cursor: pointer;
-            transition: all 0.2s;
         }
         
         .takeaway-btn.selected {
@@ -163,7 +153,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s;
         }
         
         .mic-button.recording {
@@ -183,9 +172,7 @@
             border-radius: 12px;
             margin: 16px 0;
             font-size: 20px;
-            min-height: 80px;
             text-align: left;
-            color: #333;
             border-left: 4px solid #8B4513;
         }
         
@@ -196,9 +183,7 @@
             margin: 16px 0;
             font-size: 18px;
             text-align: left;
-            color: #333;
             border-left: 4px solid #5a3e2b;
-            font-style: italic;
         }
         
         /* Right Side - Cart (1/3) */
@@ -223,18 +208,12 @@
             font-size: 20px;
             font-weight: 600;
             color: #8B4513;
-            display: flex;
-            align-items: center;
-            gap: 8px;
         }
         
         .table-info {
             background: #f8f0e8;
             padding: 8px 16px;
             border-radius: 20px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #8B4513;
         }
         
         .cart-items {
@@ -249,21 +228,14 @@
             margin-bottom: 12px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
-        }
-        
-        .cart-item-info {
-            flex: 1;
         }
         
         .cart-item-name {
             font-weight: 600;
-            margin-bottom: 4px;
         }
         
         .cart-item-quantity {
             color: #8B4513;
-            font-size: 14px;
         }
         
         .cart-item-remove {
@@ -274,10 +246,6 @@
             height: 36px;
             border-radius: 50%;
             cursor: pointer;
-            font-size: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .cart-total {
@@ -291,7 +259,6 @@
             justify-content: space-between;
             font-size: 18px;
             font-weight: 600;
-            margin-bottom: 8px;
         }
         
         .order-btn {
@@ -304,11 +271,6 @@
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .order-btn:hover {
-            background: #38a169;
         }
         
         .order-btn:disabled {
@@ -316,36 +278,8 @@
             cursor: not-allowed;
         }
         
-        .loading {
-            text-align: center;
-            padding: 40px;
-            color: #8B4513;
-        }
-        
         .hidden {
             display: none;
-        }
-        
-        .order-number {
-            font-size: 14px;
-            color: #666;
-            margin-top: 4px;
-        }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .main-container {
-                flex-direction: column;
-            }
-            
-            .order-area {
-                border-right: none;
-            }
-            
-            .cart-area {
-                border-left: none;
-                border-top: 2px solid #e0d6c8;
-            }
         }
     </style>
 </head>
@@ -367,14 +301,8 @@
         <div class="order-area">
             <!-- Table Selection -->
             <div class="table-section">
-                <div class="section-title">
-                    <span>🪑</span> Tisch auswählen
-                </div>
-                
-                <div class="table-grid" id="tableGrid">
-                    <!-- Tables 1-20 will be generated here -->
-                </div>
-                
+                <div class="section-title">🪑 Tisch auswählen</div>
+                <div class="table-grid" id="tableGrid"></div>
                 <button class="takeaway-btn" id="takeawayBtn">🥡 Takeaway</button>
             </div>
 
@@ -382,13 +310,9 @@
             <div class="voice-section">
                 <button class="mic-button" id="micBtn">🎤</button>
                 <p>Mikrofon drücken und sprechen</p>
-                
-                <div class="recognized-text" id="recognizedText">
-                    👆 Hier erscheint was Sie gesagt haben
-                </div>
-                
+                <div class="recognized-text" id="recognizedText"></div>
                 <div class="assistant-response" id="assistantResponse">
-                    🤵 Hallo! Ich bin Ihr Kellner. Bitte sagen Sie mir, was Sie bestellen möchten.
+                    🤵 Hallo! Was darf ich Ihnen bringen?
                 </div>
             </div>
         </div>
@@ -396,16 +320,11 @@
         <!-- Right Side - Cart -->
         <div class="cart-area">
             <div class="cart-header">
-                <div class="cart-title">
-                    <span>🛒</span> Ihre Bestellung
-                </div>
-                <div class="table-info" id="tableInfo">
-                    Kein Tisch
-                </div>
+                <div class="cart-title">🛒 Ihre Bestellung</div>
+                <div class="table-info" id="tableInfo">Kein Tisch</div>
             </div>
 
             <div class="cart-items" id="cartItems">
-                <!-- Cart items will appear here -->
                 <div style="text-align: center; color: #999; padding: 40px;">
                     Ihre Bestellung ist leer
                 </div>
@@ -416,58 +335,26 @@
                     <span>Anzahl Artikel:</span>
                     <span id="totalItems">0</span>
                 </div>
-                <div class="order-number" id="orderNumberDisplay"></div>
             </div>
 
             <button class="order-btn" id="sendOrderBtn" disabled>✅ Bestellung aufgeben</button>
         </div>
     </div>
 
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    
     <!-- Gemini API -->
     <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
 
     <script>
         // ===========================================
-        // 🔴 KONFIGURATION - HIER DEINE DATEN EINFÜGEN
+        // 🔴 GEMINI KEY - HIER EINFÜGEN
         // ===========================================
-        const FIREBASE_CONFIG = {
-            apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
-            authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
-            projectId: "restaurantsysteme-eaff6",
-            storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
-            messagingSenderId: "891911663005",
-            appId: "1:891911663005:web:85672b40c90c158c2ad374"
-        };
-
-        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU"; // 🔴 DEIN GEMINI KEY
-
-        // ===========================================
-        // Firebase initialisieren
-        // ===========================================
-        firebase.initializeApp(FIREBASE_CONFIG);
-        const db = firebase.firestore();
-
-        // ===========================================
-        // MENÜ (Hardcoded für Test)
-        // ===========================================
-        const MENU = [
-            { id: "1", name: "Kookiesbecher", category: "Becher" },
-            { id: "2", name: "Erdbeerbecher", category: "Becher" },
-            { id: "3", name: "Spaghettieis", category: "Eis" },
-            { id: "4", name: "Spagetti Erdbeer", category: "Eis" },
-            { id: "5", name: "Spagetti kiwi", category: "Eis" }
-        ];
+        const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";
 
         // ===========================================
         // State
         // ===========================================
         let currentOrder = [];
         let selectedTable = null;
-        let currentOrderNumber = null;
         let chatSession = null;
         let isRecording = false;
         let recognition = null;
@@ -475,194 +362,166 @@
         // ===========================================
         // Gemini Chat initialisieren
         // ===========================================
-        async function initGeminiChat() {
+        async function initGemini() {
             try {
                 const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
                 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
                 
-                // Menü als Text für Gemini
-                const menuText = MENU.map(item => `- ${item.name}`).join('\n');
-                
-                // Chat mit Verlauf starten
                 chatSession = model.startChat({
                     history: [
                         {
                             role: "user",
-                            parts: [{ text: `Du bist ein freundlicher Kellner in 'Die Primel Eiscafé'. 
-                            Das ist unsere Speisekarte:
-                            ${menuText}
+                            parts: [{ text: `Du bist ein Kellner. Der Gast sagt etwas auf Deutsch.
+                            Deine Aufgabe: Extrahiere die Bestellung als JSON.
                             
-                            Deine Aufgabe:
-                            1. Hilf dem Gast bei der Bestellung
-                            2. Verstehe was er möchte (auch wenn er die Namen falsch sagt)
-                            3. Wenn du sicher bist, frage: "Soll ich das bestellen?"
-                            4. Bei "Ja": Bestätige und frage "Möchten Sie noch etwas?"
-                            5. Bei "Nein": Frage "Was möchten Sie stattdessen?"
-                            6. Bei Antworten wie "Ja und noch...": Verstehe die zusätzliche Bestellung
-                            7. Sei freundlich und natürlich
+                            Format: {"items": ["Name1", "Name2"], "mengen": [1, 2]}
                             
-                            Wichtig: Antworte immer auf Deutsch, als wärst du ein echter Kellner.` }],
+                            Beispiele:
+                            - "Ich hätte gerne einen Erdbeerbecher" → {"items": ["Erdbeerbecher"], "mengen": [1]}
+                            - "zweimal Spaghettieis und einmal Cola" → {"items": ["Spaghettieis", "Cola"], "mengen": [2, 1]}
+                            
+                            Antworte NUR mit dem JSON, keine anderen Texte.` }],
                         },
                         {
                             role: "model",
-                            parts: [{ text: "Hallo! Ich bin Ihr Kellner. Was darf ich Ihnen heute bringen?" }],
+                            parts: [{ text: "Ich verstehe." }],
                         },
                     ],
                 });
                 
-                console.log("✅ Gemini Chat bereit");
+                console.log("✅ Gemini bereit");
                 return true;
             } catch (error) {
                 console.error("❌ Gemini Fehler:", error);
-                document.getElementById('assistantResponse').innerHTML = 
-                    "🤵 Entschuldigung, ich habe technische Probleme. Bitte versuchen Sie es später noch einmal.";
                 return false;
             }
         }
 
         // ===========================================
-        // Nachricht an Gemini senden
+        // Bestellung aus Text extrahieren
         // ===========================================
-        async function sendToGemini(userMessage) {
-            if (!chatSession) {
-                await initGeminiChat();
-            }
+        async function extractOrder(text) {
+            if (!chatSession) await initGemini();
             
             try {
-                const result = await chatSession.sendMessage(userMessage);
+                const result = await chatSession.sendMessage(text);
                 const response = await result.response;
-                const text = response.text();
+                const jsonText = response.text().replace(/```json|```/g, '').trim();
                 
-                document.getElementById('assistantResponse').innerHTML = `🤵 ${text}`;
+                console.log("📦 Gemini:", jsonText);
+                const order = JSON.parse(jsonText);
                 
-                // Gemini's Antwort analysieren
-                await analyzeGeminiResponse(text, userMessage);
+                // Zur Bestellung hinzufügen
+                if (order.items && order.items.length > 0) {
+                    for (let i = 0; i < order.items.length; i++) {
+                        const itemName = order.items[i];
+                        const quantity = order.mengen[i] || 1;
+                        
+                        for (let j = 0; j < quantity; j++) {
+                            addToOrder(itemName);
+                        }
+                    }
+                    
+                    document.getElementById('assistantResponse').innerHTML = 
+                        `🤵 ${order.items.join(', ')} wurde bestellt. Möchten Sie noch etwas?`;
+                } else {
+                    document.getElementById('assistantResponse').innerHTML = 
+                        `🤵 Entschuldigung, konnte ich nicht verstehen. Bitte wiederholen Sie.`;
+                }
                 
             } catch (error) {
-                console.error("❌ Gemini Fehler:", error);
+                console.error("❌ Fehler:", error);
                 document.getElementById('assistantResponse').innerHTML = 
-                    "🤵 Entschuldigung, ich habe Sie nicht verstanden. Könnten Sie das bitte wiederholen?";
+                    `🤵 Entschuldigung, ich habe Sie nicht verstanden. Könnten Sie das bitte wiederholen?`;
             }
         }
 
         // ===========================================
-        // Gemini's Antwort analysieren
+        // Warenkorb
         // ===========================================
-        async function analyzeGeminiResponse(response, userMessage) {
-            const lowerResponse = response.toLowerCase();
-            const lowerUserMessage = userMessage.toLowerCase();
-            
-            // Prüfen ob Gemini eine Bestellung bestätigt hat
-            if (lowerResponse.includes("soll ich das bestellen") || 
-                lowerResponse.includes("ist das richtig")) {
-                // Gemini fragt nach Bestätigung
-                return;
-            }
-            
-            // Prüfen ob der Gast zugestimmt hat
-            if (lowerUserMessage.includes("ja") || lowerUserMessage.includes("genau")) {
-                // Versuche die Bestellung aus der vorherigen Antwort zu extrahieren
-                // In einer echten Implementierung würden wir hier den Kontext analysieren
-                // Für jetzt: Einfache Demo
-            }
-            
-            // Prüfen ob der Gast abgelehnt hat
-            if (lowerUserMessage.includes("nein") || lowerUserMessage.includes("falsch")) {
-                // Gemini wird nachfragen
-                return;
-            }
+        function addToOrder(itemName) {
+            currentOrder.push({
+                name: itemName,
+                id: Date.now() + Math.random()
+            });
+            updateCart();
         }
 
-        // ===========================================
-        // Tisch-Auswahl
-        // ===========================================
-        function generateTableButtons() {
-            const grid = document.getElementById('tableGrid');
-            let html = '';
-            
-            for (let i = 1; i <= 20; i++) {
-                html += `<button class="table-btn" onclick="selectTable(${i})">${i}</button>`;
-            }
-            
-            grid.innerHTML = html;
-        }
-
-        window.selectTable = function(tableNumber) {
-            selectedTable = tableNumber;
-            document.getElementById('takeawayBtn').classList.remove('selected');
-            document.querySelectorAll('.table-btn').forEach(btn => btn.classList.remove('selected'));
-            event.target.classList.add('selected');
-            document.getElementById('tableInfo').innerHTML = `Tisch ${tableNumber}`;
-            checkOrderButton();
-        };
-
-        document.getElementById('takeawayBtn').addEventListener('click', function() {
-            selectedTable = 'takeaway';
-            this.classList.add('selected');
-            document.querySelectorAll('.table-btn').forEach(btn => btn.classList.remove('selected'));
-            document.getElementById('tableInfo').innerHTML = '🥡 Takeaway';
-            checkOrderButton();
-        });
-
-        // ===========================================
-        // Warenkorb Funktionen
-        // ===========================================
-        function addToCart(itemName) {
-            const existingItem = currentOrder.find(item => item.name === itemName);
-            
-            if (existingItem) {
-                existingItem.quantity++;
-            } else {
-                currentOrder.push({
-                    name: itemName,
-                    quantity: 1
-                });
-            }
-            
-            updateCartDisplay();
-        }
-
-        function removeFromCart(index) {
+        function removeFromOrder(index) {
             currentOrder.splice(index, 1);
-            updateCartDisplay();
+            updateCart();
         }
 
-        function updateCartDisplay() {
+        function updateCart() {
             const cartDiv = document.getElementById('cartItems');
             const totalSpan = document.getElementById('totalItems');
+            const orderBtn = document.getElementById('sendOrderBtn');
             
             if (currentOrder.length === 0) {
                 cartDiv.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;">Ihre Bestellung ist leer</div>';
                 totalSpan.textContent = '0';
+                orderBtn.disabled = true;
                 return;
             }
             
             let html = '';
-            let total = 0;
-            
             currentOrder.forEach((item, index) => {
-                total += item.quantity;
                 html += `
                     <div class="cart-item">
-                        <div class="cart-item-info">
+                        <div>
                             <div class="cart-item-name">${item.name}</div>
-                            <div class="cart-item-quantity">${item.quantity}x</div>
                         </div>
-                        <button class="cart-item-remove" onclick="removeFromCart(${index})">✕</button>
+                        <button class="cart-item-remove" onclick="removeFromOrder(${index})">✕</button>
                     </div>
                 `;
             });
             
             cartDiv.innerHTML = html;
-            totalSpan.textContent = total;
+            totalSpan.textContent = currentOrder.length;
+            
+            if (selectedTable) orderBtn.disabled = false;
         }
 
-        window.removeFromCart = removeFromCart;
+        // ===========================================
+        // Tisch-Auswahl
+        // ===========================================
+        function generateTables() {
+            const grid = document.getElementById('tableGrid');
+            for (let i = 1; i <= 20; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'table-btn';
+                btn.textContent = i;
+                btn.onclick = () => selectTable(i, btn);
+                grid.appendChild(btn);
+            }
+        }
+
+        function selectTable(num, btn) {
+            selectedTable = num;
+            document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('takeawayBtn').classList.remove('selected');
+            btn.classList.add('selected');
+            document.getElementById('tableInfo').innerHTML = `Tisch ${num}`;
+            checkOrderButton();
+        }
+
+        document.getElementById('takeawayBtn').onclick = function() {
+            selectedTable = 'takeaway';
+            this.classList.add('selected');
+            document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('selected'));
+            document.getElementById('tableInfo').innerHTML = '🥡 Takeaway';
+            checkOrderButton();
+        };
+
+        function checkOrderButton() {
+            const btn = document.getElementById('sendOrderBtn');
+            btn.disabled = !(selectedTable && currentOrder.length > 0);
+        }
 
         // ===========================================
         // Bestellung absenden
         // ===========================================
-        async function sendOrder() {
+        document.getElementById('sendOrderBtn').onclick = async function() {
             if (!selectedTable || currentOrder.length === 0) return;
             
             const orderNumber = Math.floor(Math.random() * 9000) + 1000;
@@ -670,38 +529,19 @@
             const orderData = {
                 table: selectedTable === 'takeaway' ? 'Takeaway' : `Tisch ${selectedTable}`,
                 orderNumber: orderNumber,
-                items: currentOrder,
-                status: 'pending',
-                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                totalItems: currentOrder.reduce((sum, item) => sum + item.quantity, 0)
+                items: currentOrder.map(item => item.name),
+                timestamp: new Date().toISOString(),
+                status: 'pending'
             };
             
-            try {
-                await db.collection('orders').add(orderData);
-                
-                document.getElementById('orderNumberDisplay').innerHTML = 
-                    `Bestellnummer: #${orderNumber}`;
-                
-                // Bestellung leeren
-                currentOrder = [];
-                updateCartDisplay();
-                
-                // Kellner informieren
-                document.getElementById('assistantResponse').innerHTML = 
-                    `🤵 Vielen Dank! Ihre Bestellung #${orderNumber} wurde an die Küche weitergeleitet.`;
-                
-                document.getElementById('sendOrderBtn').disabled = true;
-                
-            } catch (error) {
-                console.error("Fehler beim Bestellen:", error);
-                alert("Fehler beim Aufgeben der Bestellung");
-            }
-        }
-
-        function checkOrderButton() {
-            const btn = document.getElementById('sendOrderBtn');
-            btn.disabled = !(selectedTable && currentOrder.length > 0);
-        }
+            console.log("📤 Bestellung:", orderData);
+            
+            document.getElementById('assistantResponse').innerHTML = 
+                `🤵 Vielen Dank! Bestellung #${orderNumber} wurde aufgegeben.`;
+            
+            currentOrder = [];
+            updateCart();
+        };
 
         // ===========================================
         // Speech Recognition
@@ -731,9 +571,7 @@
                 
                 if (finalText) {
                     document.getElementById('recognizedText').innerHTML = `"${finalText}"`;
-                    
-                    // An Gemini senden
-                    sendToGemini(finalText);
+                    extractOrder(finalText);
                 }
             };
             
@@ -742,15 +580,11 @@
                 stopRecording();
             };
             
-            recognition.onend = function() {
-                stopRecording();
-            };
+            recognition.onend = stopRecording;
         }
 
         function startRecording() {
-            if (recognition && !isRecording) {
-                recognition.start();
-            }
+            if (recognition && !isRecording) recognition.start();
         }
 
         function stopRecording() {
@@ -761,19 +595,12 @@
         // ===========================================
         // Initialisierung
         // ===========================================
-        async function init() {
-            generateTableButtons();
-            await initGeminiChat();
-        }
+        generateTables();
+        initGemini();
 
-        init();
-
-        // Event Listeners
         document.getElementById('micBtn').addEventListener('click', startRecording);
-        document.getElementById('sendOrderBtn').addEventListener('click', sendOrder);
-
-        // Für Cart Updates
-        window.addToCart = addToCart;
+        
+        window.removeFromOrder = removeFromOrder;
     </script>
 </body>
 </html>
