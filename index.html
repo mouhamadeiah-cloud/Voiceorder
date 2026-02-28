@@ -3,670 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🍦 Die Primel Eiscafé - Bestellung</title>
+    <title>Eiscafé Voice Order - Kristina</title>
     <style>
-        * {
-            box-sizing: border-box;
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            padding: 0;
+        :root {
+            --bg-color: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --accent-color: #d4af37; /* ذهبي خفيف للأناقة */
+            --text-color: #ffffff;
+            --secondary-text: #b3b3b3;
         }
-        
+
         body {
-            background: #f3f1e8;
-            min-height: 100vh;
-        }
-        
-        /* Navbar */
-        .navbar {
-            background: #8B4513;
-            color: white;
-            padding: 16px 24px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            height: 100vh;
+            overflow: hidden;
         }
-        
-        .logo {
-            font-size: 24px;
-            font-weight: bold;
+
+        /* Container Layout */
+        .app-container {
             display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .nav-links {
-            display: flex;
-            gap: 20px;
-        }
-        
-        .nav-links a {
-            color: white;
-            text-decoration: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            background: rgba(255,255,255,0.1);
-        }
-        
-        .nav-links a:hover {
-            background: rgba(255,255,255,0.2);
-        }
-        
-        /* Main Container */
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 24px;
-        }
-        
-        /* Table Selection */
-        .table-section {
-            background: white;
-            border-radius: 16px;
-            padding: 20px;
-            margin-bottom: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .section-title {
-            font-size: 18px;
-            font-weight: 600;
-            color: #8B4513;
-            margin-bottom: 16px;
-        }
-        
-        .table-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            margin-bottom: 16px;
-        }
-        
-        .table-btn {
-            width: 60px;
-            height: 60px;
-            border-radius: 12px;
-            border: 2px solid #e0d6c8;
-            background: white;
-            font-size: 18px;
-            font-weight: 600;
-            color: #8B4513;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        
-        .table-btn:hover {
-            border-color: #8B4513;
-        }
-        
-        .table-btn.selected {
-            background: #8B4513;
-            color: white;
-            border-color: #8B4513;
-        }
-        
-        .takeaway-btn {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #8B4513;
-            background: white;
-            border-radius: 12px;
-            font-size: 16px;
-            font-weight: 600;
-            color: #8B4513;
-            cursor: pointer;
-            transition: all 0.2s;
+            height: 100%;
         }
-        
-        .takeaway-btn.selected {
-            background: #8B4513;
-            color: white;
+
+        /* Left Side: Interaction */
+        .interaction-panel {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            border-right: 1px solid #333;
         }
-        
-        /* Main Order Button */
-        .order-button-container {
-            text-align: center;
-            margin: 30px 0;
-        }
-        
-        .main-order-btn {
-            width: 200px;
-            height: 200px;
+
+        .kristina-avatar {
+            width: 150px;
+            height: 150px;
             border-radius: 50%;
-            background: #8B4513;
+            background: radial-gradient(circle, var(--accent-color) 0%, transparent 70%);
+            box-shadow: 0 0 30px rgba(212, 175, 55, 0.2);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.1); opacity: 1; box-shadow: 0 0 50px rgba(212, 175, 55, 0.4); }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        .chat-display {
+            width: 80%;
+            max-height: 200px;
+            text-align: center;
+            font-size: 1.5rem;
+            margin-bottom: 40px;
+            color: var(--text-color);
+        }
+
+        .mic-btn {
+            background: var(--accent-color);
             border: none;
-            color: white;
-            font-size: 48px;
+            padding: 15px 40px;
+            border-radius: 50px;
+            color: black;
             font-weight: bold;
+            font-size: 1.1rem;
             cursor: pointer;
-            box-shadow: 0 10px 20px rgba(139, 69, 19, 0.3);
-            transition: all 0.3s;
+            transition: 0.3s;
+        }
+
+        .mic-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Right Side: Warenkorb */
+        .sidebar-basket {
+            flex: 1;
+            background-color: var(--card-bg);
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+        }
+
+        .basket-header {
+            border-bottom: 1px solid #333;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .basket-items {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .order-card {
+            background: #252525;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .btn-send {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            width: 100%;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto;
+            z-index: 100;
         }
-        
-        .main-order-btn:hover {
-            transform: scale(1.05);
-            background: #9e5b24;
-        }
-        
-        .main-order-btn.recording {
-            background: #e53e3e;
-            animation: pulse 1.5s infinite;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-        
-        /* Chat Container */
-        .chat-container {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            margin: 24px 0;
-            min-height: 200px;
-            max-height: 400px;
-            overflow-y: auto;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .message {
-            margin-bottom: 16px;
-            padding: 12px 16px;
-            border-radius: 12px;
-            max-width: 80%;
-        }
-        
-        .customer {
-            background: #e3f2fd;
-            margin-left: auto;
-            border-bottom-right-radius: 4px;
-        }
-        
-        .christina {
-            background: #fff3e0;
-            border-bottom-left-radius: 4px;
-        }
-        
-        .message-sender {
-            font-size: 12px;
-            font-weight: 600;
-            margin-bottom: 4px;
-            color: #666;
-        }
-        
-        .message-text {
-            font-size: 16px;
-            line-height: 1.5;
-        }
-        
-        /* Recognized Text */
-        .recognized-text {
-            background: #f0f0f0;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 12px 0;
-            font-style: italic;
-            color: #666;
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
             text-align: center;
         }
-        
-        /* Cart */
-        .cart-section {
-            background: white;
-            border-radius: 16px;
-            padding: 24px;
-            margin-top: 24px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        
-        .cart-title {
-            font-size: 20px;
-            font-weight: 600;
-            color: #8B4513;
-            margin-bottom: 16px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .cart-content {
-            background: #f8f0e8;
-            padding: 20px;
-            border-radius: 12px;
-            min-height: 80px;
-            margin-bottom: 16px;
-            font-size: 18px;
-            line-height: 1.6;
-        }
-        
-        .cart-empty {
-            color: #999;
-            text-align: center;
-            padding: 20px;
-        }
-        
-        .cart-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        
-        .table-info {
-            background: #e8e0d8;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-weight: 600;
-        }
-        
-        .send-order-btn {
-            background: #48bb78;
+
+        input {
+            padding: 10px;
+            width: 100px;
+            margin: 10px;
+            border-radius: 5px;
+            border: 1px solid #444;
+            background: #222;
             color: white;
-            border: none;
-            padding: 16px 32px;
-            border-radius: 30px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        
-        .send-order-btn:hover {
-            background: #38a169;
-        }
-        
-        .send-order-btn:disabled {
-            background: #cbd5e0;
-            cursor: not-allowed;
-        }
-        
-        .hidden {
-            display: none;
-        }
-        
-        /* Status */
-        .status-indicator {
-            text-align: center;
-            margin: 10px 0;
-            color: #8B4513;
-            font-weight: 600;
+            font-size: 1.2rem;
         }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <div class="navbar">
-        <div class="logo">
-            <span>🍦</span> Die Primel Eiscafé
-        </div>
-        <div class="nav-links">
-            <a href="index.html">🍽️ Bestellung</a>
-            <a href="kueche.html">👨‍🍳 Küche</a>
-        </div>
-    </div>
 
-    <!-- Main Content -->
-    <div class="container">
-        <!-- Table Selection -->
-        <div class="table-section">
-            <div class="section-title">🪑 Tisch auswählen</div>
-            <div class="table-grid" id="tableGrid"></div>
-            <button class="takeaway-btn" id="takeawayBtn">🥡 Takeaway</button>
-        </div>
-
-        <!-- Main Order Button -->
-        <div class="order-button-container">
-            <button class="main-order-btn" id="mainOrderBtn">
-                🎤<br>BESTELLEN
-            </button>
-            <div class="status-indicator" id="statusIndicator"></div>
-        </div>
-
-        <!-- Recognized Text -->
-        <div class="recognized-text" id="recognizedText"></div>
-
-        <!-- Chat Container -->
-        <div class="chat-container" id="chatContainer">
-            <!-- Messages will appear here -->
-        </div>
-
-        <!-- Cart -->
-        <div class="cart-section">
-            <div class="cart-title">
-                <span>🛒</span> Ihre Bestellung
-                <span class="table-info" id="tableInfo">Kein Tisch</span>
-            </div>
-            
-            <div class="cart-content" id="cartContent">
-                <div class="cart-empty">Ihre Bestellung ist leer</div>
-            </div>
-            
-            <div class="cart-footer">
-                <div></div>
-                <button class="send-order-btn" id="sendOrderBtn" disabled>
-                    ✅ Bestellung aufgeben
-                </button>
-            </div>
+    <div id="tischModal" class="modal">
+        <div class="modal-content">
+            <h2>Willkommen!</h2>
+            <p>Bitte geben Sie Ihre Tischnummer ein:</p>
+            <input type="number" id="tischnummer" placeholder="1-20">
+            <br>
+            <button class="mic-btn" onclick="startApp()">Starten</button>
         </div>
     </div>
 
-    <!-- Gemini API -->
-    <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
+    <div class="app-container">
+        <div class="interaction-panel">
+            <div class="kristina-avatar"></div>
+            <div id="status-text" style="color: #d4af37; margin-bottom: 10px;">Kristina ist bereit...</div>
+            <div class="chat-display" id="kristina-speech">
+                "Hallo, ich bin Kristina. Was darf ich Ihnen heute bringen?"
+            </div>
+            <button class="mic-btn" id="recordBtn">🎤 Sprechen</button>
+        </div>
+
+        <div class="sidebar-basket">
+            <div class="basket-header">
+                <h2>Warenkorb</h2>
+                <p id="display-tisch">Tisch: -</p>
+            </div>
+            <div class="basket-items" id="cart">
+                <p style="color: #555;">Der Warenkorb ist leer.</p>
+            </div>
+            <button class="btn-send" onclick="sendToKitchen()">An die Küche senden</button>
+        </div>
+    </div>
 
     <script>
-        // ===========================================
-        // 🔴 GEMINI KEY - HIER EINFÜGEN
-        // ===========================================
+        // 🔴🔴🔴 [GEMINI API CONFIGURATION] 🔴🔴🔴
         const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";
+        
+        // 🔴🔴🔴 [FIREBASE CONFIGURATION] 🔴🔴🔴
+ const firebaseConfig = {
+  apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
+  authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
+  databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "restaurantsysteme-eaff6",
+  storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
+  messagingSenderId: "891911663005",
+  appId: "1:891911663005:web:85672b40c90c158c2ad374"
+};
 
-        // ===========================================
-        // State
-        // ===========================================
-        let currentOrder = {
-            items: [],
-            summary: "",
-            confirmed: false
-        };
-        let selectedTable = null;
-        let chatSession = null;
-        let isRecording = false;
-        let recognition = null;
-        let conversationHistory = [];
-        let waitingForConfirmation = false;
-        let lastUnderstanding = "";
 
-        // ===========================================
-        // Gemini Chat initialisieren
-        // ===========================================
-        async function initGemini() {
-            try {
-                const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-                const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-                
-                chatSession = model.startChat({
-                    history: [
-                        {
-                            role: "user",
-                            parts: [{ text: `Du bist Christina, eine freundliche Kellnerin in einem Eiscafé. 
-                            Deine Aufgabe:
-                            1. Höre zu was der Gast sagt
-                            2. Verstehe seine Bestellung
-                            3. Wenn der Gast fertig ist, fasse zusammen und frage "Ist das richtig?"
-                            4. Wenn der Gast bestätigt ("ja", "genau", etc.), bestätige und warte auf weiteren Input
-                            5. Wenn der Gast ablehnt ("nein", "falsch", etc.), entschuldige dich und bitte ihn zu wiederholen
-                            
-                            Wichtig: 
-                            - Stelle keine unnötigen Fragen
-                            - Mache keine Vorschläge
-                            - Warte auf den Gast
-                            
-                            Sprich immer freundlich und natürlich auf Deutsch.` }],
-                        },
-                        {
-                            role: "model",
-                            parts: [{ text: "Hallo! Ich bin Christina, Ihre Kellnerin. Bitte sagen Sie mir, was Sie bestellen möchten." }],
-                        },
-                    ],
-                });
-                
-                console.log("✅ Christina bereit");
-                addMessageToChat('christina', 'Hallo! Ich bin Christina, Ihre Kellnerin. Bitte sagen Sie mir, was Sie bestellen möchten.');
-                return true;
-            } catch (error) {
-                console.error("❌ Gemini Fehler:", error);
-                return false;
-            }
-        }
+        // قائمة المنيو لإرسالها لجيمناي كـ Context
+        const menu = [
+            "Erdbeerbecher", "Schokobecher", "Spagettieis", 
+            "Spagett- Erdbeeren", "Kaffee", "Cappuccino", 
+            "Tee", "Eistee Pfirsich", "Eistee Zitrone"
+        ];
 
-        // ===========================================
-        // Chat-Anzeige
-        // ===========================================
-        function addMessageToChat(sender, text) {
-            const chatContainer = document.getElementById('chatContainer');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}`;
-            
-            const senderName = sender === 'christina' ? '👩‍🍳 Christina' : '👤 Gast';
-            
-            messageDiv.innerHTML = `
-                <div class="message-sender">${senderName}</div>
-                <div class="message-text">${text}</div>
-            `;
-            
-            chatContainer.appendChild(messageDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
+        let currentTisch = "";
 
-        // ===========================================
-        // Nachricht an Gemini senden
-        // ===========================================
-        async function sendToChristina(userMessage) {
-            if (!chatSession) await initGemini();
-            
-            try {
-                // Zeige was der Gast gesagt hat
-                addMessageToChat('customer', userMessage);
-                document.getElementById('recognizedText').innerHTML = '';
-                
-                const result = await chatSession.sendMessage(userMessage);
-                const response = await result.response;
-                const christinaResponse = response.text();
-                
-                // Zeige Christinas Antwort
-                addMessageToChat('christina', christinaResponse);
-                
-                // Prüfe ob Christina nach Bestätigung fragt
-                if (christinaResponse.toLowerCase().includes('ist das richtig') ||
-                    christinaResponse.toLowerCase().includes('habe ich richtig verstanden')) {
-                    waitingForConfirmation = true;
-                    
-                    // Extrahiere die Zusammenfassung aus Christinas Antwort
-                    const summaryMatch = christinaResponse.match(/["'](.+?)["']/);
-                    if (summaryMatch) {
-                        lastUnderstanding = summaryMatch[1];
-                    } else {
-                        // Versuche den Satz vor "Ist das richtig?" zu finden
-                        const parts = christinaResponse.split('?')[0];
-                        const sentences = parts.split('.');
-                        for (let s of sentences) {
-                            if (s.length > 10 && !s.includes('Christina')) {
-                                lastUnderstanding = s.trim();
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                // Prüfe ob der Gast bestätigt hat
-                if (waitingForConfirmation && 
-                    (userMessage.toLowerCase().includes('ja') || 
-                     userMessage.toLowerCase().includes('genau') ||
-                     userMessage.toLowerCase().includes('richtig'))) {
-                    
-                    // Bestätigung erhalten
-                    waitingForConfirmation = false;
-                    currentOrder.summary = lastUnderstanding;
-                    updateCart();
-                    
-                    // Frage nach weiteren Bestellungen
-                    await chatSession.sendMessage("Ich möchte weiterbestellen");
-                    
-                } else if (waitingForConfirmation && 
-                          (userMessage.toLowerCase().includes('nein') || 
-                           userMessage.toLowerCase().includes('falsch'))) {
-                    // Ablehnung - warte auf neue Bestellung
-                    waitingForConfirmation = false;
-                }
-                
-            } catch (error) {
-                console.error("❌ Fehler:", error);
-                addMessageToChat('christina', 'Entschuldigung, ich habe Sie nicht verstanden. Bitte wiederholen Sie.');
-            }
-        }
-
-        // ===========================================
-        // Warenkorb aktualisieren
-        // ===========================================
-        function updateCart() {
-            const cartContent = document.getElementById('cartContent');
-            const sendBtn = document.getElementById('sendOrderBtn');
-            
-            if (currentOrder.summary) {
-                cartContent.innerHTML = `<div style="font-size: 18px;">${currentOrder.summary}</div>`;
-                if (selectedTable) sendBtn.disabled = false;
+        function startApp() {
+            const input = document.getElementById('tischnummer').value;
+            if(input) {
+                currentTisch = input;
+                document.getElementById('display-tisch').innerText = "Tisch: " + currentTisch;
+                document.getElementById('tischModal').style.display = 'none';
             } else {
-                cartContent.innerHTML = '<div class="cart-empty">Ihre Bestellung ist leer</div>';
-                sendBtn.disabled = true;
+                alert("Bitte Tischnummer eingeben!");
             }
         }
 
-        // ===========================================
-        // Tisch-Auswahl
-        // ===========================================
-        function generateTables() {
-            const grid = document.getElementById('tableGrid');
-            for (let i = 1; i <= 20; i++) {
-                const btn = document.createElement('button');
-                btn.className = 'table-btn';
-                btn.textContent = i;
-                btn.onclick = () => selectTable(i, btn);
-                grid.appendChild(btn);
-            }
+        // هنا سنضيف لاحقاً منطق الـ Web Speech API للتعرف على الصوت
+        // ومنطق إرسال النص إلى Gemini واستقبال الرد والملخص
+        
+        function sendToKitchen() {
+            alert("Bestellung an die Küche gesendet!");
+            // 🔴 هنا يتم الربط مع Firebase لإرسال الطلب لصفحة المطبخ
+
         }
 
-        function selectTable(num, btn) {
-            selectedTable = num;
-            document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('selected'));
-            document.getElementById('takeawayBtn').classList.remove('selected');
-            btn.classList.add('selected');
-            document.getElementById('tableInfo').innerHTML = `Tisch ${num}`;
-            checkOrderButton();
-        }
+        document.getElementById('recordBtn').addEventListener('click', function() {
+            document.getElementById('status-text').innerText = "Kristina hört zu...";
+            // منطق تسجيل الصوت يبدأ هنا
+        });
 
-        document.getElementById('takeawayBtn').onclick = function() {
-            selectedTable = 'takeaway';
-            this.classList.add('selected');
-            document.querySelectorAll('.table-btn').forEach(b => b.classList.remove('selected'));
-            document.getElementById('tableInfo').innerHTML = '🥡 Takeaway';
-            checkOrderButton();
-        };
-
-        function checkOrderButton() {
-            const btn = document.getElementById('sendOrderBtn');
-            btn.disabled = !(selectedTable && currentOrder.summary);
-        }
-
-        // ===========================================
-        // Bestellung absenden
-        // ===========================================
-        document.getElementById('sendOrderBtn').onclick = async function() {
-            if (!selectedTable || !currentOrder.summary) return;
-            
-            const orderNumber = Math.floor(Math.random() * 9000) + 1000;
-            
-            const orderData = {
-                table: selectedTable === 'takeaway' ? 'Takeaway' : `Tisch ${selectedTable}`,
-                orderNumber: orderNumber,
-                summary: currentOrder.summary,
-                timestamp: new Date().toLocaleString('de-DE'),
-                status: 'pending'
-            };
-            
-            console.log("📤 Bestellung:", orderData);
-            
-            // Hier kommt Firebase
-            alert(`✅ Bestellung #${orderNumber} wurde an die Küche gesendet!`);
-            
-            // Reset
-            currentOrder = { items: [], summary: "", confirmed: false };
-            updateCart();
-        };
-
-        // ===========================================
-        // Speech Recognition
-        // ===========================================
-        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-        if (SpeechRecognition) {
-            recognition = new SpeechRecognition();
-            recognition.lang = 'de-DE';
-            recognition.continuous = false;
-            recognition.interimResults = true;
-            
-            recognition.onstart = function() {
-                isRecording = true;
-                document.getElementById('mainOrderBtn').classList.add('recording');
-                document.getElementById('statusIndicator').innerHTML = '🎤 Höre zu...';
-                document.getElementById('recognizedText').innerHTML = '';
-            };
-            
-            recognition.onresult = function(event) {
-                let finalText = '';
-                let interimText = '';
-                
-                for (let i = 0; i < event.results.length; i++) {
-                    if (event.results[i].isFinal) {
-                        finalText += event.results[i][0].transcript;
-                    } else {
-                        interimText += event.results[i][0].transcript;
-                    }
-                }
-                
-                if (interimText) {
-                    document.getElementById('recognizedText').innerHTML = `"${interimText}"`;
-                }
-                
-                if (finalText) {
-                    document.getElementById('recognizedText').innerHTML = `"${finalText}"`;
-                    sendToChristina(finalText);
-                }
-            };
-            
-            recognition.onerror = function() {
-                document.getElementById('statusIndicator').innerHTML = '❌ Fehler';
-                stopRecording();
-            };
-            
-            recognition.onend = function() {
-                stopRecording();
-            };
-        }
-
-        function startRecording() {
-            if (!selectedTable) {
-                alert('Bitte zuerst einen Tisch auswählen!');
-                return;
-            }
-            if (recognition && !isRecording) {
-                recognition.start();
-            }
-        }
-
-        function stopRecording() {
-            isRecording = false;
-            document.getElementById('mainOrderBtn').classList.remove('recording');
-            document.getElementById('statusIndicator').innerHTML = '';
-        }
-
-        // ===========================================
-        // Event Listeners
-        // ===========================================
-        document.getElementById('mainOrderBtn').addEventListener('click', startRecording);
-
-        // ===========================================
-        // Initialisierung
-        // ===========================================
-        generateTables();
-        initGemini();
     </script>
 </body>
 </html>
