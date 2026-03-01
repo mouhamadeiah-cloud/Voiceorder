@@ -10,7 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* ========== DESIGN WIE VORHER ========== */
+        /* نفس التصميم الرائع */
         * {
             margin: 0;
             padding: 0;
@@ -399,7 +399,6 @@
     let isRecording = false;       // Aufnahmestatus
     let recognition;               // Speech Recognition Objekt
     let isEditMode = false;        // Bearbeitungsmodus
-    let lastFinalText = '';        // **NEU: Speichert den letzten finalen Text**
     let ignoreOnEnd = false;       // Steuerung für onEnd
 
     // DOM Elemente
@@ -417,7 +416,7 @@
         recognition = new SpeechRecognition();
         recognition.lang = 'de-DE';
         recognition.continuous = true;
-        recognition.interimResults = true;  // Wir behalten interimResults für bessere UX
+        recognition.interimResults = false;  // ✅ KEINE INTERIM RESULTS MEHR!
         recognition.maxAlternatives = 1;
 
         recognition.onstart = function() {
@@ -434,9 +433,8 @@
             console.log('Aufnahme beendet');
             
             if (!ignoreOnEnd) {
-                if (finalText) {
-                    transcriptDisplay.innerText = finalText;
-                } else {
+                // Keine Änderung, nur anzeigen was wir haben
+                if (!finalText) {
                     transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
                 }
             }
@@ -444,37 +442,20 @@
         };
 
         recognition.onresult = function(event) {
-            let interimTranscript = '';
-            let finalTranscript = '';
-            
-            // **VERBESSERT: Keine Duplikate mehr!**
+            // ✅ Jetzt bekommen wir nur finale Ergebnisse!
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
                 
-                if (event.results[i].isFinal) {
-                    // **WICHTIG: Prüfe ob dieser Text schon hinzugefügt wurde**
-                    if (transcript !== lastFinalText) {
-                        finalTranscript += transcript + ' ';
-                        lastFinalText = transcript;  // Speichere den letzten Text
-                    }
+                // Jedes Ergebnis ist ein kompletter Satz
+                if (finalText) {
+                    finalText = finalText + ' ' + transcript;
                 } else {
-                    interimTranscript += transcript;
+                    finalText = transcript;
                 }
-            }
-            
-            // Füge neue finale Ergebnisse hinzu
-            if (finalTranscript) {
-                finalText = finalText + finalTranscript;
-            }
-            
-            // Anzeige kombinieren (final + interim)
-            if (finalText || interimTranscript) {
-                let displayText = finalText;
-                if (interimTranscript) {
-                    // Zeige interim Text in Klammern für bessere UX
-                    displayText += ' (' + interimTranscript + '...)';
-                }
-                transcriptDisplay.innerText = displayText;
+                
+                // Sofort anzeigen
+                transcriptDisplay.innerText = finalText;
+                console.log('Neuer Text:', transcript);
             }
         };
 
@@ -520,7 +501,6 @@
     // Text löschen
     document.getElementById('cancelTextBtn').addEventListener('click', function() {
         finalText = '';
-        lastFinalText = '';  // **NEU: Auch den letzten Text zurücksetzen**
         transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
         editKeyboard.style.display = 'none';
         editKeyboard.value = '';
@@ -544,7 +524,6 @@
     editKeyboard.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             finalText = editKeyboard.value;
-            lastFinalText = finalText;  // **NEU: Aktualisiere letzten Text**
             transcriptDisplay.innerText = finalText;
             transcriptDisplay.style.display = 'block';
             editKeyboard.style.display = 'none';
@@ -562,7 +541,6 @@
         updateCartDisplay();
         // Text zurücksetzen
         finalText = '';
-        lastFinalText = '';  // **NEU: Zurücksetzen für neue Aufnahme**
         transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
     });
 
@@ -622,22 +600,11 @@
         
         const originalOnResult = recognition.onresult;
         const originalOnEnd = recognition.onend;
-        let tempLastText = '';  // **NEU: Für temporäre Aufnahme**
         
         recognition.onresult = function(event) {
-            let spokenText = '';
             for (let i = event.resultIndex; i < event.results.length; i++) {
-                if (event.results[i].isFinal) {
-                    const transcript = event.results[i][0].transcript;
-                    // **NEU: Auch hier Duplikate vermeiden**
-                    if (transcript !== tempLastText) {
-                        spokenText += transcript;
-                        tempLastText = transcript;
-                    }
-                }
-            }
-            if (spokenText.trim()) {
-                cart[index] = spokenText.trim();
+                const transcript = event.results[i][0].transcript;
+                cart[index] = transcript.trim();
                 updateCartDisplay();
             }
         };
