@@ -13,7 +13,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        /* نفس التصميم السابق مع إضافة بعض التعديلات */
         * {
             margin: 0;
             padding: 0;
@@ -40,7 +39,7 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px #2a2a2a inset;
         }
 
-        /* رأس الصفحة - جديد */
+        /* رأس الصفحة */
         .header-actions {
             display: flex;
             justify-content: space-between;
@@ -85,12 +84,12 @@
             box-shadow: 0 4px 0 rgba(0,0,0,0.5);
         }
 
-        .btn-kitchen {
+        .btn-kueche {
             background: #7c4dff;
             color: white;
             box-shadow: 0 5px 0 #4a2b9e;
         }
-        .btn-kitchen:hover {
+        .btn-kueche:hover {
             background: #6b3fe0;
         }
 
@@ -511,14 +510,14 @@
 </head>
 <body>
 <div class="app-container">
-    <!-- رأس الصفحة مع الزرين الجديدين -->
+    <!-- رأس الصفحة مع الزرين -->
     <div class="header-actions">
         <div class="header-title">
             <i class="fas fa-microphone-alt"></i>
             <h2>VoiceOrder</h2>
         </div>
         <div class="header-buttons">
-            <button class="header-btn btn-kitchen" id="kitchenBtn" title="Zur Küchenansicht">
+            <button class="header-btn btn-kueche" id="kuecheBtn" title="Zur Küchenansicht">
                 <i class="fas fa-kitchen-set"></i> Küche
             </button>
             <button class="header-btn btn-call" id="callWaiterBtn" title="Kellner rufen">
@@ -603,7 +602,7 @@
     // ====================        هــــــنا تــضــع رابــط Firebase       ====================
     // ==================== 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 ====================
     
-const firebaseConfig = {
+ const firebaseConfig = {
   apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
   authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
   databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
@@ -636,7 +635,7 @@ const firebaseConfig = {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             
             if (type === 'order') {
-                // صوت وصول طلب جديد (نغمتان)
+                // صوت وصول طلب جديد (يرن في جميع أجهزة المطبخ)
                 const oscillator1 = audioCtx.createOscillator();
                 const gainNode1 = audioCtx.createGain();
                 oscillator1.type = 'sine';
@@ -660,7 +659,7 @@ const firebaseConfig = {
                 }, 200);
             } 
             else if (type === 'call') {
-                // صوت مناداة النادل (نغمة ثلاثية)
+                // صوت مناداة النادل
                 const oscillator1 = audioCtx.createOscillator();
                 const gainNode1 = audioCtx.createGain();
                 oscillator1.type = 'triangle';
@@ -864,26 +863,31 @@ const firebaseConfig = {
         }
     });
 
-    // -------------------- زر Küche (للفتح صفحة المطبخ) --------------------
-    document.getElementById('kitchenBtn').addEventListener('click', function() {
-        window.location.href = 'kitchen.html';  // افتح صفحة المطبخ
+    // -------------------- زر Küche (لفتح صفحة المطبخ) --------------------
+    document.getElementById('kuecheBtn').addEventListener('click', function() {
+        window.location.href = 'kueche.html';  // ✅ اسم الملف kueche.html
     });
 
     // -------------------- زر Rufen (مناداة النادل) --------------------
     document.getElementById('callWaiterBtn').addEventListener('click', function() {
-        playNotificationSound('call');  // صوت المناداة
-        showToast('🔔 Kellner wurde gerufen!');
+        playNotificationSound('call');  // صوت محلي
         
-        // اختياري: يمكن حفظ النداء في Firebase
+        // 🔔 حفظ النداء في Firebase ليرن في جميع أجهزة المطبخ
         const callData = {
             type: 'call',
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            table: 'all'  // نداء عام
+            message: 'Kellner rufen',
+            active: true
         };
         
-        db.collection('calls').add(callData)
-            .then(() => console.log('Call saved'))
-            .catch(err => console.log('Call not saved', err));
+        db.collection('notifications').add(callData)
+            .then(() => {
+                showToast('🔔 Kellner wurde gerufen! (Alle Küchengeräte klingeln)');
+            })
+            .catch(err => {
+                console.log('Call not saved', err);
+                showToast('🔔 Kellner wurde gerufen!', 'success');
+            });
     });
 
     // -------------------- Warenkorb Anzeige --------------------
@@ -975,8 +979,21 @@ const firebaseConfig = {
         db.collection('orders').add(orderData)
             .then((docRef) => {
                 console.log('Bestellung gespeichert mit ID:', docRef.id);
-                playNotificationSound('order');  // 🔔 صوت وصول الطلب
-                showToast(`✅ Bestellung #${docRef.id.slice(-4)} an ${tableText} gesendet!`);
+                
+                // 🔔🔔🔔 إنشاء إشعار صوتي لجميع أجهزة المطبخ 🔔🔔🔔
+                const notificationData = {
+                    type: 'new_order',
+                    orderId: docRef.id,
+                    table: tableText,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    active: true
+                };
+                
+                return db.collection('notifications').add(notificationData);
+            })
+            .then(() => {
+                playNotificationSound('order');  // صوت محلي للمرسل
+                showToast(`✅ Bestellung #${docRef.id.slice(-4)} an ${tableText} gesendet! (Alle Küchengeräte klingeln)`);
                 
                 cart = [];
                 updateCartDisplay();
@@ -987,6 +1004,10 @@ const firebaseConfig = {
                 showToast('❌ Fehler beim Senden der Bestellung', 'error');
             });
     }
+
+    // -------------------- Listener für Notifications (für Seite der Küche) --------------------
+    // هذا المستمع يعمل فقط في صفحة المطبخ، لكننا نضعه هنا للتوثيق
+    // سيتم وضع مستمع مماثل في صفحة kueche.html
 
     // إغلاق المودال بالنقر خارجاً
     window.onclick = function(event) {
