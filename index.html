@@ -602,7 +602,7 @@
     // ====================        هــــــنا تــضــع رابــط Firebase       ====================
     // ==================== 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 ====================
     
- const firebaseConfig = {
+const firebaseConfig = {
   apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
   authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
   databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
@@ -635,7 +635,7 @@
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             
             if (type === 'order') {
-                // صوت وصول طلب جديد (يرن في جميع أجهزة المطبخ)
+                // صوت وصول طلب جديد
                 const oscillator1 = audioCtx.createOscillator();
                 const gainNode1 = audioCtx.createGain();
                 oscillator1.type = 'sine';
@@ -653,7 +653,7 @@
                     oscillator2.frequency.value = 1200;
                     gainNode2.gain.value = 0.5;
                     oscillator2.connect(gainNode2);
-                    gainNode2.connect(audioCtx.destination);
+                    oscillator2.connect(audioCtx.destination);
                     oscillator2.start();
                     oscillator2.stop(audioCtx.currentTime + 0.3);
                 }, 200);
@@ -689,7 +689,7 @@
                     oscillator3.frequency.value = 1000;
                     gainNode3.gain.value = 0.4;
                     oscillator3.connect(gainNode3);
-                    gainNode3.connect(audioCtx.destination);
+                    oscillator3.connect(audioCtx.destination);
                     oscillator3.start();
                     oscillator3.stop(audioCtx.currentTime + 0.2);
                 }, 600);
@@ -697,6 +697,22 @@
         } catch (e) {
             console.log('Audio nicht unterstützt', e);
         }
+    }
+
+    // صوت تأكيد محلي بسيط
+    function playLocalConfirmSound() {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 600;
+            gainNode.gain.value = 0.2;
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1);
+        } catch (e) {}
     }
 
     // -------------------- Speech Recognition Initialisierung --------------------
@@ -865,23 +881,23 @@
 
     // -------------------- زر Küche (لفتح صفحة المطبخ) --------------------
     document.getElementById('kuecheBtn').addEventListener('click', function() {
-        window.location.href = 'kueche.html';  // ✅ اسم الملف kueche.html
+        window.location.href = 'kueche.html';
     });
 
     // -------------------- زر Rufen (مناداة النادل) --------------------
     document.getElementById('callWaiterBtn').addEventListener('click', function() {
-        playNotificationSound('call');  // صوت محلي
-        
-        // 🔔 حفظ النداء في Firebase ليرن في جميع أجهزة المطبخ
+        // حفظ النداء في Firebase ليرن في جميع أجهزة المطبخ
         const callData = {
             type: 'call',
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             message: 'Kellner rufen',
+            table: 'all',
             active: true
         };
         
         db.collection('notifications').add(callData)
             .then(() => {
+                playLocalConfirmSound(); // صوت تأكيد محلي فقط
                 showToast('🔔 Kellner wurde gerufen! (Alle Küchengeräte klingeln)');
             })
             .catch(err => {
@@ -980,7 +996,7 @@
             .then((docRef) => {
                 console.log('Bestellung gespeichert mit ID:', docRef.id);
                 
-                // 🔔🔔🔔 إنشاء إشعار صوتي لجميع أجهزة المطبخ 🔔🔔🔔
+                // إنشاء إشعار صوتي لجميع أجهزة المطبخ
                 const notificationData = {
                     type: 'new_order',
                     orderId: docRef.id,
@@ -993,21 +1009,24 @@
             })
             .then(() => {
                 playNotificationSound('order');  // صوت محلي للمرسل
-                showToast(`✅ Bestellung #${docRef.id.slice(-4)} an ${tableText} gesendet! (Alle Küchengeräte klingeln)`);
+                showToast(`✅ Bestellung an ${tableText} gesendet! (Alle Küchengeräte klingeln)`);
                 
+                // ✅ تفريغ السلة
                 cart = [];
                 updateCartDisplay();
+                
+                // ✅ إغلاق نافذة اختيار الطاولة
                 closeModal('tableModal');
+                
+                // ✅ إعادة تعيين النص العلوي
+                finalText = '';
+                transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
             })
             .catch((error) => {
                 console.error('Fehler beim Speichern:', error);
                 showToast('❌ Fehler beim Senden der Bestellung', 'error');
             });
     }
-
-    // -------------------- Listener für Notifications (für Seite der Küche) --------------------
-    // هذا المستمع يعمل فقط في صفحة المطبخ، لكننا نضعه هنا للتوثيق
-    // سيتم وضع مستمع مماثل في صفحة kueche.html
 
     // إغلاق المودال بالنقر خارجاً
     window.onclick = function(event) {
