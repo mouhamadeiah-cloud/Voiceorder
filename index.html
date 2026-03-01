@@ -13,6 +13,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
+        /* نفس التصميم السابق مع إضافة بعض التعديلات */
         * {
             margin: 0;
             padding: 0;
@@ -37,6 +38,84 @@
             border-radius: 32px;
             padding: 24px;
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 0 1px #2a2a2a inset;
+        }
+
+        /* رأس الصفحة - جديد */
+        .header-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 0 10px;
+        }
+
+        .header-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-title i {
+            font-size: 2rem;
+            color: #00e676;
+        }
+
+        .header-title h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .header-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .header-btn {
+            padding: 12px 25px;
+            border-radius: 50px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+        }
+
+        .btn-kitchen {
+            background: #7c4dff;
+            color: white;
+            box-shadow: 0 5px 0 #4a2b9e;
+        }
+        .btn-kitchen:hover {
+            background: #6b3fe0;
+        }
+
+        .btn-call {
+            background: #ffb300;
+            color: #121212;
+            box-shadow: 0 5px 0 #b27100;
+        }
+        .btn-call:hover {
+            background: #e6a200;
+        }
+        .btn-call i {
+            animation: ring 2s infinite;
+        }
+
+        @keyframes ring {
+            0% { transform: rotate(0deg); }
+            10% { transform: rotate(15deg); }
+            20% { transform: rotate(-15deg); }
+            30% { transform: rotate(10deg); }
+            40% { transform: rotate(-10deg); }
+            50% { transform: rotate(5deg); }
+            60% { transform: rotate(-5deg); }
+            70% { transform: rotate(0deg); }
+            100% { transform: rotate(0deg); }
         }
 
         /* Aufnahmebereich */
@@ -432,6 +511,21 @@
 </head>
 <body>
 <div class="app-container">
+    <!-- رأس الصفحة مع الزرين الجديدين -->
+    <div class="header-actions">
+        <div class="header-title">
+            <i class="fas fa-microphone-alt"></i>
+            <h2>VoiceOrder</h2>
+        </div>
+        <div class="header-buttons">
+            <button class="header-btn btn-kitchen" id="kitchenBtn" title="Zur Küchenansicht">
+                <i class="fas fa-kitchen-set"></i> Küche
+            </button>
+            <button class="header-btn btn-call" id="callWaiterBtn" title="Kellner rufen">
+                <i class="fas fa-bell"></i> Rufen
+            </button>
+        </div>
+    </div>
 
     <!-- Aufnahmebereich -->
     <div class="recording-section">
@@ -535,6 +629,76 @@ const firebaseConfig = {
     const editModal = document.getElementById('editModal');
     const editModalInput = document.getElementById('editModalInput');
     const tableGrid = document.getElementById('tableGrid');
+
+    // -------------------- Funktion für Sounds --------------------
+    function playNotificationSound(type = 'order') {
+        try {
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            if (type === 'order') {
+                // صوت وصول طلب جديد (نغمتان)
+                const oscillator1 = audioCtx.createOscillator();
+                const gainNode1 = audioCtx.createGain();
+                oscillator1.type = 'sine';
+                oscillator1.frequency.value = 800;
+                gainNode1.gain.value = 0.5;
+                oscillator1.connect(gainNode1);
+                gainNode1.connect(audioCtx.destination);
+                oscillator1.start();
+                oscillator1.stop(audioCtx.currentTime + 0.3);
+
+                setTimeout(() => {
+                    const oscillator2 = audioCtx.createOscillator();
+                    const gainNode2 = audioCtx.createGain();
+                    oscillator2.type = 'sine';
+                    oscillator2.frequency.value = 1200;
+                    gainNode2.gain.value = 0.5;
+                    oscillator2.connect(gainNode2);
+                    gainNode2.connect(audioCtx.destination);
+                    oscillator2.start();
+                    oscillator2.stop(audioCtx.currentTime + 0.3);
+                }, 200);
+            } 
+            else if (type === 'call') {
+                // صوت مناداة النادل (نغمة ثلاثية)
+                const oscillator1 = audioCtx.createOscillator();
+                const gainNode1 = audioCtx.createGain();
+                oscillator1.type = 'triangle';
+                oscillator1.frequency.value = 600;
+                gainNode1.gain.value = 0.4;
+                oscillator1.connect(gainNode1);
+                gainNode1.connect(audioCtx.destination);
+                oscillator1.start();
+                oscillator1.stop(audioCtx.currentTime + 0.2);
+
+                setTimeout(() => {
+                    const oscillator2 = audioCtx.createOscillator();
+                    const gainNode2 = audioCtx.createGain();
+                    oscillator2.type = 'triangle';
+                    oscillator2.frequency.value = 800;
+                    gainNode2.gain.value = 0.4;
+                    oscillator2.connect(gainNode2);
+                    gainNode2.connect(audioCtx.destination);
+                    oscillator2.start();
+                    oscillator2.stop(audioCtx.currentTime + 0.2);
+                }, 300);
+
+                setTimeout(() => {
+                    const oscillator3 = audioCtx.createOscillator();
+                    const gainNode3 = audioCtx.createGain();
+                    oscillator3.type = 'triangle';
+                    oscillator3.frequency.value = 1000;
+                    gainNode3.gain.value = 0.4;
+                    oscillator3.connect(gainNode3);
+                    gainNode3.connect(audioCtx.destination);
+                    oscillator3.start();
+                    oscillator3.stop(audioCtx.currentTime + 0.2);
+                }, 600);
+            }
+        } catch (e) {
+            console.log('Audio nicht unterstützt', e);
+        }
+    }
 
     // -------------------- Speech Recognition Initialisierung --------------------
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -700,6 +864,28 @@ const firebaseConfig = {
         }
     });
 
+    // -------------------- زر Küche (للفتح صفحة المطبخ) --------------------
+    document.getElementById('kitchenBtn').addEventListener('click', function() {
+        window.location.href = 'kitchen.html';  // افتح صفحة المطبخ
+    });
+
+    // -------------------- زر Rufen (مناداة النادل) --------------------
+    document.getElementById('callWaiterBtn').addEventListener('click', function() {
+        playNotificationSound('call');  // صوت المناداة
+        showToast('🔔 Kellner wurde gerufen!');
+        
+        // اختياري: يمكن حفظ النداء في Firebase
+        const callData = {
+            type: 'call',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            table: 'all'  // نداء عام
+        };
+        
+        db.collection('calls').add(callData)
+            .then(() => console.log('Call saved'))
+            .catch(err => console.log('Call not saved', err));
+    });
+
     // -------------------- Warenkorb Anzeige --------------------
     function updateCartDisplay() {
         cartCount.textContent = cart.length;
@@ -789,6 +975,7 @@ const firebaseConfig = {
         db.collection('orders').add(orderData)
             .then((docRef) => {
                 console.log('Bestellung gespeichert mit ID:', docRef.id);
+                playNotificationSound('order');  // 🔔 صوت وصول الطلب
                 showToast(`✅ Bestellung #${docRef.id.slice(-4)} an ${tableText} gesendet!`);
                 
                 cart = [];
@@ -801,6 +988,7 @@ const firebaseConfig = {
             });
     }
 
+    // إغلاق المودال بالنقر خارجاً
     window.onclick = function(event) {
         if (event.target === tableModal) {
             closeModal('tableModal');
