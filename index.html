@@ -12,64 +12,6 @@
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-    <!-- Gemini API -->
-    <script src="https://cdn.jsdelivr.net/npm/@google/generative-ai@latest/dist/index.min.js"></script>
-    <!-- Menu Datei -->
-    <script>
-        // menu.js - قائمة الطعام
-        const menuItems = [
-            // 🍽️ Hauptgerichte
-            "Schnitzel",
-            "Bratwurst",
-            "Currywurst",
-            "Hamburger",
-            "Cheeseburger",
-            "Pizza Margherita",
-            "Pizza Salami",
-            "Pizza Hawaii",
-            "Döner Kebab",
-            "Falafel",
-            "Spaghetti Bolognese",
-            "Spaghetti Carbonara",
-            "Lasagne",
-            "Käsespätzle",
-            "Maultaschen",
-            
-            // 🥗 Salate
-            "Caesar Salat",
-            "Gemischter Salat",
-            "Griechischer Salat",
-            "Bauernsalat",
-            
-            // 🍦 Desserts
-            "Erdbeerbecher",
-            "Eisbecher",
-            "Schokoladenkuchen",
-            "Apfelstrudel",
-            "Pfannkuchen",
-            
-            // 🥤 Getränke
-            "Cola",
-            "Fanta",
-            "Sprite",
-            "Wasser",
-            "Apfelschorle",
-            "Bier",
-            "Wein",
-            
-            // ☕ Heißgetränke
-            "Kaffee",
-            "Espresso",
-            "Cappuccino",
-            "Tee",
-            
-            // 🍟 Beilagen
-            "Pommes",
-            "Kroketten",
-            "Reis",
-            "Brot"
-        ];
-    </script>
     <style>
         * {
             margin: 0;
@@ -276,17 +218,6 @@
             color: #121212;
             box-shadow: 0 5px 0 #00803b;
         }
-        .btn-smart {
-            background: #9c27b0;
-            color: white;
-            box-shadow: 0 5px 0 #6a1b9a;
-        }
-        .btn-smart:hover {
-            background: #8e24aa;
-        }
-        .btn-smart i {
-            animation: robot 2s infinite;
-        }
         .btn-continue {
             background: #7c4dff;
             color: white;
@@ -302,12 +233,6 @@
         }
         .btn-send i {
             font-size: 1.5rem;
-        }
-
-        @keyframes robot {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
         }
 
         /* Warenkorb */
@@ -622,7 +547,6 @@
         <div class="action-buttons">
             <button class="btn btn-cancel" id="cancelTextBtn"><i class="fas fa-times"></i> Löschen</button>
             <button class="btn btn-add" id="addToCartBtn"><i class="fas fa-cart-plus"></i> In Warenkorb</button>
-            <button class="btn btn-smart" id="smartAddBtn"><i class="fas fa-robot"></i> Smart</button>
             <button class="btn btn-continue" id="continueRecordingBtn"><i class="fas fa-plus-circle"></i> Fortsetzen</button>
         </div>
     </div>
@@ -687,23 +611,11 @@ const firebaseConfig = {
   messagingSenderId: "891911663005",
   appId: "1:891911663005:web:85672b40c90c158c2ad374"
 };
-    
     // ==================== 🔴 انتهى مكان وضع الرابط 🔴 ====================
 
     // Firebase initialisieren
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-
-    // ==================== 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 ====================
-    // ====================        هــــــنا تــضــع مفتاح Gemini          ====================
-    // ==================== 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 ====================
-    
-    const GEMINI_API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";  // 🔴 ضع مفتاح Gemini API هنا
-    
-    // ==================== 🔴 انتهى مكان وضع المفتاح 🔴 ====================
-
-    // Gemini initialisieren
-    const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
 
     // -------------------- DOM Elemente --------------------
     const recordBtn = document.getElementById('recordBtn');
@@ -903,86 +815,39 @@ const firebaseConfig = {
         }
     }
 
-    // -------------------- Gemini Funktionen --------------------
-    function getMenuText() {
-        return menuItems.join(', ');
-    }
-
-    async function extractMenuItemsWithGemini(userText) {
-        try {
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
-            
-            const menuList = getMenuText();
-            
-            const prompt = `Du bist ein intelligenter Kellner in einem deutschen Restaurant. 
-            
-            Der Kunde sagt: "${userText}"
-            
-            Unsere Speisekarte: ${menuList}
-            
-            Extrahiere NUR die Gerichte und Getränke, die der Kunde bestellen möchte, AUS UNSERER SPEISEKARTE.
-            
-            Wichtig:
-            - Ignoriere Füllwörter wie "ich möchte", "bitte", "gerne", "und", "ein", "eine", "einen"
-            - Wenn ein Gericht ähnlich ist (z.B. "Erdbeereis" statt "Erdbeerbecher"), wähle das, was wir haben
-            - Gib NUR die gefundenen Artikel zurück, als JSON-Array
-            - Wenn nichts gefunden wird, gib [] zurück
-            
-            Beispiele:
-            - "ich möchte einen Erdbeerbecher" -> ["Erdbeerbecher"]
-            - "einmal Pommes und eine Cola bitte" -> ["Pommes", "Cola"]
-            - "bringen Sie mir ein Schnitzel mit Pommes" -> ["Schnitzel", "Pommes"]
-            
-            Antwort:`;
-            
-            const result = await model.generateContent(prompt);
-            const response = await result.response;
-            const text = response.text();
-            
-            // تنظيف النص وتحويله إلى مصفوفة
-            const cleanedText = text.replace(/```json|```/g, '').trim();
-            const items = JSON.parse(cleanedText);
-            
-            return Array.isArray(items) ? items : [];
-            
-        } catch (error) {
-            console.error('Fehler bei Gemini:', error);
-            return [];
-        }
-    }
-
     // -------------------- Event Listener --------------------
     recordBtn.addEventListener('click', toggleRecording);
 
-    // النقر على النص لفتح التعديل
+    // ✅ النقر على النص لفتح التعديل
     transcriptDisplay.addEventListener('click', function() {
         if (!finalText.trim()) {
             showToast('Kein Text zum Bearbeiten vorhanden!', 'error');
             return;
         }
         editKeyboard.style.display = 'block';
-        editKeyboard.value = finalText;
+        editKeyboard.value = finalText;  // نسخ النص الحالي
         transcriptDisplay.style.display = 'none';
         isEditMode = true;
         editKeyboard.focus();
     });
 
-    // حفظ التعديل عند الضغط على Enter
+    // ✅ حفظ التعديل عند الضغط على Enter
     editKeyboard.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
-            finalText = editKeyboard.value;
+            finalText = editKeyboard.value;  // تحديث المتغير
             transcriptDisplay.innerText = finalText;
             transcriptDisplay.style.display = 'block';
             editKeyboard.style.display = 'none';
             isEditMode = false;
-            console.log('Text aktualisiert:', finalText);
+            console.log('Text aktualisiert:', finalText); // للتأكد
         }
     });
 
-    // حفظ التعديل عند فقدان التركيز
+    // ✅ حفظ التعديل عند فقدان التركيز
     editKeyboard.addEventListener('blur', function() {
         if (isEditMode) {
+            // إذا كان هناك تغيير، احفظه
             if (editKeyboard.value !== finalText) {
                 finalText = editKeyboard.value;
                 transcriptDisplay.innerText = finalText;
@@ -1002,53 +867,18 @@ const firebaseConfig = {
         isEditMode = false;
     });
 
-    // In Warenkorb (manuell)
+    // ✅ In Warenkorb - الآن يستخدم finalText المحدث
     document.getElementById('addToCartBtn').addEventListener('click', function() {
         if (!finalText.trim()) {
             showToast('Bitte zuerst einen Text aufnehmen oder eingeben!', 'error');
             return;
         }
-        console.log('Hinzufügen zum Warenkorb:', finalText);
+        console.log('Hinzufügen zum Warenkorb:', finalText); // للتأكد
         cart.push(finalText.trim());
         updateCartDisplay();
         finalText = '';
         transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
         showToast('Bestellung zum Warenkorb hinzugefügt');
-    });
-
-    // Smart Add - mit Gemini
-    document.getElementById('smartAddBtn').addEventListener('click', async function() {
-        if (!finalText.trim()) {
-            showToast('Bitte zuerst einen Text aufnehmen oder eingeben!', 'error');
-            return;
-        }
-        
-        showToast('🧠 Gemini denkt nach...', 'success');
-        
-        try {
-            const items = await extractMenuItemsWithGemini(finalText);
-            
-            if (items.length === 0) {
-                showToast('❌ Keine Menü-Artikel erkannt', 'error');
-                return;
-            }
-            
-            // إضافة العناصر للسلة
-            items.forEach(item => {
-                cart.push(item);
-            });
-            
-            updateCartDisplay();
-            showToast(`✅ ${items.length} Artikel hinzugefügt: ${items.join(', ')}`);
-            
-            // إعادة تعيين النص
-            finalText = '';
-            transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
-            
-        } catch (error) {
-            console.error('Fehler:', error);
-            showToast('❌ Fehler bei der Erkennung', 'error');
-        }
     });
 
     // Aufnahme fortsetzen
@@ -1062,12 +892,12 @@ const firebaseConfig = {
         }
     });
 
-    // زر Küche (لفتح صفحة المطبخ)
+    // -------------------- زر Küche (لفتح صفحة المطبخ) --------------------
     document.getElementById('kuecheBtn').addEventListener('click', function() {
         window.location.href = 'kueche.html';
     });
 
-    // زر Rufen (مناداة النادل)
+    // -------------------- زر Rufen (مناداة النادل) --------------------
     document.getElementById('callWaiterBtn').addEventListener('click', function() {
         // حفظ النداء في Firebase ليرن في جميع أجهزة المطبخ
         const callData = {
