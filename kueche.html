@@ -169,6 +169,13 @@
             border-bottom: 1px solid #444;
         }
 
+        .order-meta {
+            display: flex;
+            gap: 15px;
+            color: #aaa;
+            font-size: 0.9rem;
+        }
+
         .card-actions {
             display: flex;
             gap: 10px;
@@ -212,14 +219,6 @@
         /* معلومات البطاقة */
         .card-info {
             padding: 20px;
-        }
-
-        .order-meta {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            color: #aaa;
-            font-size: 0.9rem;
         }
 
         .order-table {
@@ -440,27 +439,23 @@ const firebaseConfig = {
         let completedOrders = [];
         let currentDeleteId = null;
         let expandedCardId = null;
-        let audio = new Audio();
-        
-        // 🔔 صوت الطلب الجديد (سأستخدم Web Audio API)
+
+        // -------------------- أصوات المطبخ --------------------
         function playNewOrderSound() {
             try {
-                // إنشاء صوت بسيط باستخدام Web Audio API
                 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                const oscillator = audioCtx.createOscillator();
-                const gainNode = audioCtx.createGain();
                 
-                oscillator.type = 'sine';
-                oscillator.frequency.value = 800;
-                gainNode.gain.value = 0.5;
-                
-                oscillator.connect(gainNode);
-                gainNode.connect(audioCtx.destination);
-                
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.3);
-                
-                // نغمة ثانية
+                // نغمة مزدوجة للطلب الجديد
+                const oscillator1 = audioCtx.createOscillator();
+                const gainNode1 = audioCtx.createGain();
+                oscillator1.type = 'sine';
+                oscillator1.frequency.value = 800;
+                gainNode1.gain.value = 0.5;
+                oscillator1.connect(gainNode1);
+                gainNode1.connect(audioCtx.destination);
+                oscillator1.start();
+                oscillator1.stop(audioCtx.currentTime + 0.3);
+
                 setTimeout(() => {
                     const oscillator2 = audioCtx.createOscillator();
                     const gainNode2 = audioCtx.createGain();
@@ -468,7 +463,7 @@ const firebaseConfig = {
                     oscillator2.frequency.value = 1200;
                     gainNode2.gain.value = 0.5;
                     oscillator2.connect(gainNode2);
-                    gainNode2.connect(audioCtx.destination);
+                    oscillator2.connect(audioCtx.destination);
                     oscillator2.start();
                     oscillator2.stop(audioCtx.currentTime + 0.3);
                 }, 200);
@@ -476,6 +471,90 @@ const firebaseConfig = {
                 console.log('Audio nicht unterstützt', e);
             }
         }
+
+        function playCallSound() {
+            try {
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                
+                // نغمة ثلاثية للنداء
+                const oscillator1 = audioCtx.createOscillator();
+                const gainNode1 = audioCtx.createGain();
+                oscillator1.type = 'triangle';
+                oscillator1.frequency.value = 600;
+                gainNode1.gain.value = 0.5;
+                oscillator1.connect(gainNode1);
+                gainNode1.connect(audioCtx.destination);
+                oscillator1.start();
+                oscillator1.stop(audioCtx.currentTime + 0.2);
+
+                setTimeout(() => {
+                    const oscillator2 = audioCtx.createOscillator();
+                    const gainNode2 = audioCtx.createGain();
+                    oscillator2.type = 'triangle';
+                    oscillator2.frequency.value = 800;
+                    gainNode2.gain.value = 0.5;
+                    oscillator2.connect(gainNode2);
+                    oscillator2.connect(audioCtx.destination);
+                    oscillator2.start();
+                    oscillator2.stop(audioCtx.currentTime + 0.2);
+                }, 300);
+
+                setTimeout(() => {
+                    const oscillator3 = audioCtx.createOscillator();
+                    const gainNode3 = audioCtx.createGain();
+                    oscillator3.type = 'triangle';
+                    oscillator3.frequency.value = 1000;
+                    gainNode3.gain.value = 0.5;
+                    oscillator3.connect(gainNode3);
+                    oscillator3.connect(audioCtx.destination);
+                    oscillator3.start();
+                    oscillator3.stop(audioCtx.currentTime + 0.2);
+                }, 600);
+            } catch (e) {
+                console.log('Audio nicht unterstützt', e);
+            }
+        }
+
+        // -------------------- Toast --------------------
+        function showToast(message) {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = '#00e676';
+            toast.style.color = '#121212';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.remove();
+            }, 2000);
+        }
+
+        // -------------------- Listener für Benachrichtigungen (الأجراس) --------------------
+        db.collection('notifications')
+            .orderBy('timestamp', 'desc')
+            .limit(1)
+            .onSnapshot((snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        const notification = change.doc.data();
+                        
+                        // تشغيل الصوت المناسب حسب نوع الإشعار
+                        if (notification.type === 'call') {
+                            playCallSound();
+                            showToast('🔔 Kellner wurde gerufen!');
+                        }
+                        else if (notification.type === 'new_order') {
+                            playNewOrderSound();
+                            showToast('🆕 Neue Bestellung eingegangen!');
+                        }
+                        
+                        // حذف الإشعار بعد ثانية
+                        setTimeout(() => {
+                            db.collection('notifications').doc(change.doc.id).delete();
+                        }, 1000);
+                    }
+                });
+            });
 
         // -------------------- عرض البطاقات --------------------
         function displayOrders() {
@@ -568,7 +647,7 @@ const firebaseConfig = {
                 showToast(order.status === 'neu' ? 'Bestellung abgeschlossen' : 'Bestellung reaktiviert');
             } catch (error) {
                 console.error('Fehler beim Aktualisieren:', error);
-                showToast('Fehler beim Aktualisieren', 'error');
+                showToast('Fehler beim Aktualisieren');
             }
         };
 
@@ -591,12 +670,12 @@ const firebaseConfig = {
                 closeModal();
             } catch (error) {
                 console.error('Fehler beim Löschen:', error);
-                showToast('Fehler beim Löschen', 'error');
+                showToast('Fehler beim Löschen');
                 closeModal();
             }
         });
 
-        // -------------------- Firebase Echtzeit-Listener --------------------
+        // -------------------- Firebase Echtzeit-Listener für Bestellungen --------------------
         function listenToOrders() {
             db.collection('orders')
                 .orderBy('timestamp', 'desc')
@@ -604,13 +683,6 @@ const firebaseConfig = {
                     const newActive = [];
                     const newCompleted = [];
                     
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === 'added') {
-                            // صوت للطلبات الجديدة
-                            playNewOrderSound();
-                        }
-                    });
-
                     snapshot.forEach((doc) => {
                         const order = {
                             id: doc.id,
@@ -630,29 +702,27 @@ const firebaseConfig = {
                 });
         }
 
-        // -------------------- Toast --------------------
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.style.background = type === 'success' ? '#00e676' : '#ff3d3d';
-            toast.style.color = type === 'success' ? '#121212' : 'white';
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 2000);
-        }
-
         // -------------------- أزرار الرأس --------------------
         document.getElementById('newOrderBtn').addEventListener('click', function() {
-            window.location.href = 'index.html';  // رجوع لصفحة الإدخال
+            window.location.href = 'index.html';
         });
 
         document.getElementById('callWaiterBtn').addEventListener('click', function() {
-            showToast('🔔 Kellner wurde gerufen!');
-            // صوت المناداة
-            playNewOrderSound();
+            // نداء من المطبخ
+            const callData = {
+                type: 'call',
+                timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                message: 'Kellner rufen (aus Küche)',
+                table: 'all',
+                active: true
+            };
+            
+            db.collection('notifications').add(callData)
+                .then(() => {
+                    playCallSound();
+                    showToast('🔔 Kellner wurde gerufen!');
+                })
+                .catch(err => console.log('Call not saved', err));
         });
 
         // -------------------- بدء الاستماع --------------------
