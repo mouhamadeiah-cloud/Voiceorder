@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* نفس التصميم الرائع */
         * {
             margin: 0;
             padding: 0;
@@ -230,10 +229,9 @@
         }
         .item-btn.edit-btn { background: #ffb300; color: black; }
         .item-btn.delete-btn { background: #ff3d3d; }
-        .item-btn.mic-btn { background: #7c4dff; }
         .item-btn:hover { opacity: 0.9; transform: scale(0.98); }
 
-        /* Modal */
+        /* Modal Fenster */
         .modal {
             display: none;
             position: fixed;
@@ -250,7 +248,7 @@
             padding: 35px;
             border-radius: 40px;
             width: 90%;
-            max-width: 600px;
+            max-width: 500px;
             border: 2px solid #00e676;
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8);
         }
@@ -262,6 +260,55 @@
             font-size: 2rem;
         }
 
+        .modal-content h3 {
+            color: #ffffff;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 16px;
+            font-size: 1.2rem;
+            border-radius: 20px;
+            border: 2px solid #444;
+            background: #2a2a2a;
+            color: white;
+            margin-bottom: 20px;
+            direction: rtl;
+        }
+        .modal-input:focus {
+            border-color: #00e676;
+            outline: none;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .modal-btn {
+            padding: 14px 28px;
+            border-radius: 30px;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            flex: 1;
+        }
+        .modal-btn-save {
+            background: #00e676;
+            color: #121212;
+        }
+        .modal-btn-cancel {
+            background: #ff3d3d;
+            color: white;
+        }
+
+        /* Tisch-Modal */
         .table-grid {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
@@ -339,6 +386,34 @@
             font-weight: bold;
             margin-left: 10px;
         }
+
+        /* Toast Benachrichtigung */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #00e676;
+            color: #121212;
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            box-shadow: 0 10px 30px rgba(0, 230, 118, 0.3);
+            z-index: 2000;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                bottom: 0;
+                opacity: 0;
+            }
+            to {
+                bottom: 30px;
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -388,7 +463,19 @@
         <h2>Tischnummer wählen</h2>
         <div class="table-grid" id="tableGrid"></div>
         <button class="takeaway-btn" id="takeawayBtn"><i class="fas fa-motorcycle"></i> Takeaway / Mitnahme</button>
-        <button class="modal-close" onclick="closeModal()"><i class="fas fa-times"></i> Abbrechen</button>
+        <button class="modal-close" onclick="closeModal('tableModal')"><i class="fas fa-times"></i> Abbrechen</button>
+    </div>
+</div>
+
+<!-- Modal für Bearbeitung -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <h3>Bestellung bearbeiten</h3>
+        <input type="text" id="editModalInput" class="modal-input" placeholder="Bestellung eingeben...">
+        <div class="modal-buttons">
+            <button class="modal-btn modal-btn-save" id="saveEditBtn"><i class="fas fa-save"></i> Speichern</button>
+            <button class="modal-btn modal-btn-cancel" onclick="closeModal('editModal')"><i class="fas fa-times"></i> Abbrechen</button>
+        </div>
     </div>
 </div>
 
@@ -400,6 +487,7 @@
     let recognition;               // Speech Recognition Objekt
     let isEditMode = false;        // Bearbeitungsmodus
     let ignoreOnEnd = false;       // Steuerung für onEnd
+    let currentEditIndex = -1;     // Aktueller Bearbeitungsindex
 
     // DOM Elemente
     const recordBtn = document.getElementById('recordBtn');
@@ -407,7 +495,9 @@
     const editKeyboard = document.getElementById('editKeyboard');
     const cartDiv = document.getElementById('cartItems');
     const cartCount = document.getElementById('cartCount');
-    const modal = document.getElementById('tableModal');
+    const tableModal = document.getElementById('tableModal');
+    const editModal = document.getElementById('editModal');
+    const editModalInput = document.getElementById('editModalInput');
     const tableGrid = document.getElementById('tableGrid');
 
     // -------------------- Speech Recognition Initialisierung --------------------
@@ -416,24 +506,21 @@
         recognition = new SpeechRecognition();
         recognition.lang = 'de-DE';
         recognition.continuous = true;
-        recognition.interimResults = false;  // ✅ KEINE INTERIM RESULTS MEHR!
+        recognition.interimResults = false;
         recognition.maxAlternatives = 1;
 
         recognition.onstart = function() {
             isRecording = true;
             recordBtn.classList.add('recording');
             recordBtn.innerHTML = '<i class="fas fa-stop"></i>';
-            console.log('Aufnahme gestartet');
         };
 
         recognition.onend = function() {
             isRecording = false;
             recordBtn.classList.remove('recording');
             recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-            console.log('Aufnahme beendet');
             
             if (!ignoreOnEnd) {
-                // Keine Änderung, nur anzeigen was wir haben
                 if (!finalText) {
                     transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
                 }
@@ -442,20 +529,16 @@
         };
 
         recognition.onresult = function(event) {
-            // ✅ Jetzt bekommen wir nur finale Ergebnisse!
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
                 
-                // Jedes Ergebnis ist ein kompletter Satz
                 if (finalText) {
                     finalText = finalText + ' ' + transcript;
                 } else {
                     finalText = transcript;
                 }
                 
-                // Sofort anzeigen
                 transcriptDisplay.innerText = finalText;
-                console.log('Neuer Text:', transcript);
             }
         };
 
@@ -475,7 +558,7 @@
                 default:
                     errorMessage += event.error;
             }
-            alert(errorMessage);
+            showToast(errorMessage, 'error');
             isRecording = false;
             recordBtn.classList.remove('recording');
             recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
@@ -483,6 +566,29 @@
     } else {
         alert('Ihr Browser unterstützt keine Spracherkennung. Bitte verwenden Sie Chrome oder Edge.');
     }
+
+    // -------------------- Toast Benachrichtigung --------------------
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = 'toast';
+        toast.style.background = type === 'success' ? '#00e676' : '#ff3d3d';
+        toast.style.color = type === 'success' ? '#121212' : 'white';
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 2000);
+    }
+
+    // -------------------- Modal Funktionen --------------------
+    function openModal(modalId) {
+        document.getElementById(modalId).style.display = 'flex';
+    }
+
+    window.closeModal = function(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    };
 
     // -------------------- Aufnahme Steuerung --------------------
     function toggleRecording() {
@@ -507,10 +613,10 @@
         isEditMode = false;
     });
 
-    // Text bearbeiten
+    // Text bearbeiten (Tastatur)
     document.getElementById('editTextBtn').addEventListener('click', function() {
         if (!finalText.trim()) {
-            alert('Kein Text zum Bearbeiten vorhanden!');
+            showToast('Kein Text zum Bearbeiten vorhanden!', 'error');
             return;
         }
         editKeyboard.style.display = 'block';
@@ -534,14 +640,14 @@
     // Zum Warenkorb hinzufügen
     document.getElementById('addToCartBtn').addEventListener('click', function() {
         if (!finalText.trim()) {
-            alert('Bitte zuerst einen Text aufnehmen oder eingeben!');
+            showToast('Bitte zuerst einen Text aufnehmen oder eingeben!', 'error');
             return;
         }
         cart.push(finalText.trim());
         updateCartDisplay();
-        // Text zurücksetzen
         finalText = '';
         transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
+        showToast('Bestellung zum Warenkorb hinzugefügt');
     });
 
     // Aufnahme fortsetzen
@@ -551,7 +657,7 @@
             ignoreOnEnd = true;
             recognition.start();
         } else {
-            alert('Aufnahme läuft bereits.');
+            showToast('Aufnahme läuft bereits.', 'error');
         }
     });
 
@@ -570,8 +676,7 @@
                 <div class="cart-item">
                     <div class="item-text">${item}</div>
                     <div class="item-actions">
-                        <button class="item-btn edit-btn" onclick="editCartItem(${index})" title="Bearbeiten"><i class="fas fa-pen"></i></button>
-                        <button class="item-btn mic-btn" onclick="micEditCartItem(${index})" title="Per Sprache bearbeiten"><i class="fas fa-microphone"></i></button>
+                        <button class="item-btn edit-btn" onclick="openEditModal(${index})" title="Bearbeiten"><i class="fas fa-pen"></i></button>
                         <button class="item-btn delete-btn" onclick="deleteCartItem(${index})" title="Löschen"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
@@ -580,57 +685,39 @@
         cartDiv.innerHTML = html;
     }
 
-    // Warenkorb Item bearbeiten (Text)
-    window.editCartItem = function(index) {
-        const newText = prompt('Bestellung bearbeiten:', cart[index]);
-        if (newText !== null && newText.trim() !== '') {
-            cart[index] = newText.trim();
-            updateCartDisplay();
-        }
+    // Bearbeitungsmodal öffnen
+    window.openEditModal = function(index) {
+        currentEditIndex = index;
+        editModalInput.value = cart[index];
+        openModal('editModal');
     };
 
-    // Warenkorb Item bearbeiten (Sprache)
-    window.micEditCartItem = function(index) {
-        if (!recognition) {
-            alert('Spracherkennung nicht unterstützt');
-            return;
+    // Änderungen speichern
+    document.getElementById('saveEditBtn').addEventListener('click', function() {
+        const newText = editModalInput.value.trim();
+        if (newText) {
+            cart[currentEditIndex] = newText;
+            updateCartDisplay();
+            closeModal('editModal');
+            showToast('Bestellung aktualisiert');
         }
-        
-        alert('Sprechen Sie jetzt...');
-        
-        const originalOnResult = recognition.onresult;
-        const originalOnEnd = recognition.onend;
-        
-        recognition.onresult = function(event) {
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                const transcript = event.results[i][0].transcript;
-                cart[index] = transcript.trim();
-                updateCartDisplay();
-            }
-        };
-        
-        recognition.onend = function() {
-            recognition.onresult = originalOnResult;
-            recognition.onend = originalOnEnd;
-        };
-        
-        recognition.start();
-    };
+    });
 
     // Warenkorb Item löschen
     window.deleteCartItem = function(index) {
         cart.splice(index, 1);
         updateCartDisplay();
+        showToast('Bestellung entfernt');
     };
 
     // -------------------- Bestellung senden --------------------
     document.getElementById('sendOrderBtn').addEventListener('click', function() {
         if (cart.length === 0) {
-            alert('Der Warenkorb ist leer!');
+            showToast('Der Warenkorb ist leer!', 'error');
             return;
         }
         generateTableButtons();
-        modal.style.display = 'flex';
+        openModal('tableModal');
     });
 
     function generateTableButtons() {
@@ -660,20 +747,22 @@
         };
         
         console.log('Bestellung:', orderData);
-        alert(`✅ Bestellung an ${tableText} gesendet!`);
+        
+        // ✅ فقط رسالة نصية بسيطة - لا prompt!
+        showToast(`✅ Bestellung an ${tableText} gesendet!`);
         
         cart = [];
         updateCartDisplay();
-        closeModal();
+        closeModal('tableModal');
     }
 
-    window.closeModal = function() {
-        modal.style.display = 'none';
-    };
-
+    // Modal schließen wenn außerhalb geklickt
     window.onclick = function(event) {
-        if (event.target === modal) {
-            closeModal();
+        if (event.target === tableModal) {
+            closeModal('tableModal');
+        }
+        if (event.target === editModal) {
+            closeModal('editModal');
         }
     };
 
