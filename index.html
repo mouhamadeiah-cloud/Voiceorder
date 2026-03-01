@@ -1,108 +1,631 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Auto Management - Kristina Voice</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VoiceOrder - صفحة النادل</title>
+    <!-- Google Fonts و Font Awesome للتصميم -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        :root { --bg: #050505; --accent: #d4af37; --card: #121212; --text: #ffffff; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; height: 100vh; overflow: hidden; }
-        .app-container { display: flex; width: 100%; }
-        .kristina-section { flex: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; border-right: 1px solid #222; padding: 20px; }
-        .vibe { width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, var(--accent) 0%, transparent 70%); margin-bottom: 20px; }
-        .vibe.active { animation: pulse 1s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-        .chat-bubble { background: var(--card); padding: 30px; border-radius: 20px; border: 1px solid #333; width: 85%; text-align: center; font-size: 1.5rem; min-height: 100px; }
-        .mic-btn { background: var(--accent); border: none; padding: 20px 60px; border-radius: 50px; font-weight: bold; cursor: pointer; margin-top: 30px; font-size: 1.3rem; color: black; }
-        .basket-section { flex: 1; background: var(--card); padding: 25px; border-left: 1px solid #222; display: flex; flex-direction: column; }
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.95); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Cairo', sans-serif;
+        }
+
+        body {
+            background-color: #0a0a0a;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            width: 100%;
+            background-color: #121212;
+            border-radius: 30px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8), 0 0 0 2px #2a2a2a inset;
+        }
+
+        /* القسم العلوي: التسجيل وعرض النص */
+        .recording-section {
+            background: #1e1e1e;
+            border-radius: 25px;
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 1px solid #333;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .record-control {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+
+        .record-btn {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border: 3px solid #00e676;
+            color: #00e676;
+            font-size: 2.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 0 #00803b;
+        }
+
+        .record-btn.recording {
+            border-color: #ff5252;
+            color: #ff5252;
+            box-shadow: 0 0 25px #ff5252, 0 5px 0 #a10000;
+            animation: pulse 1.2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 15px #ff5252, 0 5px 0 #a10000; }
+            50% { box-shadow: 0 0 35px #ff5252, 0 5px 0 #a10000; }
+            100% { box-shadow: 0 0 15px #ff5252, 0 5px 0 #a10000; }
+        }
+
+        .text-display-area {
+            background: #2a2a2a;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid #444;
+        }
+
+        .transcript-text {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #e0e0e0;
+            min-height: 100px;
+            word-wrap: break-word;
+            background: #1a1a1a;
+            padding: 15px;
+            border-radius: 15px;
+            border-right: 5px solid #00e676;
+            line-height: 1.6;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.5);
+        }
+
+        .btn i { font-size: 1.3rem; }
+
+        .btn-edit {
+            background: #ffb300;
+            color: #1a1a1a;
+            box-shadow: 0 5px 0 #b27100;
+        }
+        .btn-cancel {
+            background: #ff3d3d;
+            color: white;
+            box-shadow: 0 5px 0 #a10000;
+        }
+        .btn-add {
+            background: #00e676;
+            color: #121212;
+            box-shadow: 0 5px 0 #00803b;
+        }
+        .btn-continue {
+            background: #7c4dff;
+            color: white;
+            box-shadow: 0 5px 0 #4a2b9e;
+        }
+        .btn-send {
+            background: #00e676;
+            color: #121212;
+            font-size: 1.5rem;
+            padding: 20px 40px;
+            box-shadow: 0 6px 0 #00803b;
+            width: 100%;
+        }
+
+        /* سلة الطلبات */
+        .cart-section {
+            background: #1e1e1e;
+            border-radius: 25px;
+            padding: 25px;
+            border: 1px solid #333;
+        }
+
+        .cart-title {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #00e676;
+        }
+
+        .cart-items {
+            min-height: 150px;
+            max-height: 350px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #151515;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+
+        .cart-item {
+            background: #252525;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-right: 6px solid #ffb300;
+            font-size: 1.2rem;
+            color: #fff;
+            transition: 0.2s;
+        }
+        .cart-item:nth-child(even) { border-right-color: #7c4dff; }
+        .cart-item:nth-child(odd) { border-right-color: #ffb300; }
+
+        .item-text {
+            flex-grow: 1;
+            font-weight: 600;
+            padding: 0 10px;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .item-btn {
+            background: #3a3a3a;
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+        }
+        .item-btn.edit-btn { background: #ffb300; color: black; }
+        .item-btn.delete-btn { background: #ff3d3d; }
+        .item-btn.mic-btn { background: #7c4dff; }
+
+        /* النافذة العائمة (Modal) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: #1e1e1e;
+            padding: 35px;
+            border-radius: 40px;
+            width: 90%;
+            max-width: 600px;
+            border: 2px solid #00e676;
+            box-shadow: 0 20px 40px black;
+        }
+
+        .table-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin: 25px 0;
+        }
+
+        .table-btn {
+            background: #2a2a2a;
+            border: 2px solid #444;
+            color: white;
+            padding: 15px 5px;
+            border-radius: 20px;
+            font-size: 1.4rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .table-btn:hover { background: #00e676; color: black; border-color: #00e676; }
+        .takeaway-btn {
+            background: #7c4dff;
+            border: none;
+            color: white;
+            padding: 15px;
+            border-radius: 50px;
+            font-size: 1.4rem;
+            width: 100%;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        /* كيبورد التعديل */
+        #editKeyboard {
+            width: 100%;
+            padding: 15px;
+            font-size: 1.5rem;
+            border-radius: 20px;
+            border: 2px solid #00e676;
+            background: #2a2a2a;
+            color: white;
+            margin-top: 20px;
+            direction: rtl;
+        }
     </style>
 </head>
 <body>
+<div class="app-container">
 
-    <div id="tischModal" class="modal">
-        <div style="text-align:center; background:#1a1a1a; padding:50px; border-radius:25px; border:2px solid var(--accent);">
-            <h1 style="color:var(--accent)">Auto Management</h1>
-            <p>Tischnummer:</p>
-            <input type="number" id="tischInput" value="1" style="padding:15px; font-size:2rem; width:80px; text-align:center; background: #000; color: #fff; border: 1px solid var(--accent);">
-            <br><br>
-            <button class="mic-btn" onclick="startApp()">Starten</button>
+    <!-- قسم التسجيل وعرض النص -->
+    <div class="recording-section">
+        <div class="record-control">
+            <button class="record-btn" id="recordBtn">
+                <i class="fas fa-microphone"></i>
+            </button>
+        </div>
+
+        <div class="text-display-area">
+            <div class="transcript-text" id="transcriptDisplay">
+                اضغط على الميكروفون وابدأ التحدث...
+            </div>
+            <!-- كيبورد يظهر عند التعديل -->
+            <input type="text" id="editKeyboard" style="display: none;" placeholder="عدل النص هنا...">
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-edit" id="editTextBtn"><i class="fas fa-pen"></i> تعديل</button>
+            <button class="btn btn-cancel" id="cancelTextBtn"><i class="fas fa-times"></i> إلغاء</button>
+            <button class="btn btn-add" id="addToCartBtn"><i class="fas fa-cart-plus"></i> إضافة للسلة</button>
+            <button class="btn btn-continue" id="continueRecordingBtn"><i class="fas fa-plus-circle"></i> إكمال</button>
         </div>
     </div>
 
-    <div class="app-container">
-        <main class="kristina-section">
-            <div id="vibe" class="vibe"></div>
-            <div id="status" style="color:var(--accent); margin-bottom:10px; font-weight: bold;">BEREIT</div>
-            <div id="kristina-text" class="chat-bubble">Kristina lädt...</div>
-            <button class="mic-btn" id="micBtn">🎤 Sprechen</button>
-        </main>
-        <aside class="basket-section">
-            <h2 style="border-bottom: 2px solid var(--accent); padding-bottom:10px;">Warenkorb</h2>
-            <div id="cart-items" style="flex-grow: 1; overflow-y: auto;"></div>
-        </aside>
+    <!-- سلة الطلبات -->
+    <div class="cart-section">
+        <div class="cart-title">
+            <i class="fas fa-shopping-basket"></i> سلة الطلبات
+        </div>
+        <div class="cart-items" id="cartItems">
+            <!-- الطلبات ستظهر هنا ديناميكياً -->
+            <div style="color: #777; text-align: center; padding: 40px;">السلة فارغة</div>
+        </div>
+        <button class="btn btn-send" id="sendOrderBtn">
+            <i class="fas fa-paper-plane"></i> إرسال الطلب للمطبخ
+        </button>
     </div>
+</div>
 
-    <script>
-        // 🔴 ضع مفتاحك هنا
-        const API_KEY = "AIzaSyDFetuGDsBvIUmJ-RU-yrr9CwtFRQO4KTU";
+<!-- النافذة العائمة لأرقام الطاولات -->
+<div id="tableModal" class="modal">
+    <div class="modal-content">
+        <h2 style="color: #00e676; margin-bottom: 20px; text-align: center;">اختر رقم الطاولة</h2>
+        <div class="table-grid" id="tableGrid">
+            <!-- الأرقام من 1 إلى 15 ستولد هنا -->
+        </div>
+        <button class="takeaway-btn" id="takeawayBtn"><i class="fas fa-motorcycle"></i> Takeaway</button>
+        <button style="background: none; border: 1px solid #444; color: white; padding: 12px; border-radius: 30px; margin-top: 15px; width: 100%;" onclick="closeModal()">إلغاء</button>
+    </div>
+</div>
 
-        let messages = [{
-            role: "user",
-            parts: [{ text: "Du bist Kristina, eine Kellnerin. Begrüße den Gast freundlich auf Deutsch und frage nach der Bestellung." }]
-        }];
+<script>
+    // -------------------- البيانات والمتغيرات --------------------
+    let cart = [];                 // مصفوفة السلة
+    let currentTranscript = '';    // النص الحالي
+    let isRecording = false;       // حالة التسجيل
+    let recognition;               // كائن التعرف على الصوت
+    let isEditMode = false;        // وضع التعديل بالنص
 
-        function speak(text) {
-            const speech = new SpeechSynthesisUtterance(text);
-            speech.lang = 'de-DE';
-            window.speechSynthesis.speak(speech);
-        }
+    // معرفات العناصر
+    const recordBtn = document.getElementById('recordBtn');
+    const transcriptDisplay = document.getElementById('transcriptDisplay');
+    const editKeyboard = document.getElementById('editKeyboard');
+    const cartDiv = document.getElementById('cartItems');
+    const modal = document.getElementById('tableModal');
+    const tableGrid = document.getElementById('tableGrid');
 
-        async function startApp() {
-            document.getElementById('tischModal').style.display = 'none';
-            // تجعل كريستينا تتحدث فور البداية
-            await callGemini(""); 
-        }
+    // -------------------- تهيئة التعرف على الصوت --------------------
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'ar-SA'; // اللغة العربية
+        recognition.continuous = true; // يستمر بالاستماع
+        recognition.interimResults = true; // يعرض نتائج مؤقتة
 
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.lang = 'de-DE';
-
-        document.getElementById('micBtn').addEventListener('click', () => {
-            recognition.start();
-            document.getElementById('vibe').classList.add('active');
-        });
-
-        recognition.onresult = async (event) => {
-            const transcript = event.results[0][0].transcript;
-            document.getElementById('vibe').classList.remove('active');
-            document.getElementById('kristina-text').innerText = "... " + transcript;
-            await callGemini(transcript);
+        recognition.onstart = function() {
+            isRecording = true;
+            recordBtn.classList.add('recording');
+            recordBtn.innerHTML = '<i class="fas fa-stop"></i>';
         };
 
-        async function callGemini(userInput) {
-            if(userInput) messages.push({ role: "user", parts: [{ text: userInput }] });
-            
-            // استخدام رابط v1 المستقر للنسخة المجانية
-            const url = `https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key=${API_KEY}`;
+        recognition.onend = function() {
+            isRecording = false;
+            recordBtn.classList.remove('recording');
+            recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        };
 
-            try {
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ contents: messages })
-                });
+        recognition.onresult = function(event) {
+            let interimTranscript = '';
+            let finalTranscript = '';
 
-                const data = await response.json();
-                if (data.candidates) {
-                    const aiText = data.candidates[0].content.parts[0].text;
-                    messages.push({ role: "model", parts: [{ text: aiText }] });
-                    document.getElementById('kristina-text').innerText = aiText;
-                    speak(aiText); // تنطق الرد فوراً
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
                 }
-            } catch (err) {
-                document.getElementById('status').innerText = "FEHLER";
-                console.error(err);
             }
+
+            // النص النهائي يضاف للنص الحالي (لأنه continuous)
+            if (finalTranscript !== '') {
+                currentTranscript = currentTranscript + ' ' + finalTranscript;
+            }
+
+            // العرض: يظهر النص الحالي + النص المؤقت
+            transcriptDisplay.innerText = currentTranscript + (interimTranscript ? ' (' + interimTranscript + '...)' : '');
+            if (!currentTranscript && !interimTranscript) {
+                transcriptDisplay.innerText = 'اضغط على الميكروفون وابدأ التحدث...';
+            }
+        };
+
+        recognition.onerror = function(event) {
+            console.error('خطأ في التعرف على الصوت:', event.error);
+            alert('حدث خطأ في الميكروفون: ' + event.error);
+            isRecording = false;
+            recordBtn.classList.remove('recording');
+            recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        };
+    } else {
+        alert('عذراً، متصفحك لا يدعم التعرف على الصوت. استخدم Chrome أو Edge.');
+    }
+
+    // -------------------- دوال التحكم بالتسجيل --------------------
+    function toggleRecording() {
+        if (!recognition) return;
+
+        if (isRecording) {
+            recognition.stop();
+        } else {
+            // إذا كنا في وضع الإكمال، نحافظ على currentTranscript
+            recognition.start();
         }
-    </script>
+    }
+
+    // -------------------- دوال الإجراءات --------------------
+    document.getElementById('recordBtn').addEventListener('click', toggleRecording);
+
+    document.getElementById('cancelTextBtn').addEventListener('click', function() {
+        currentTranscript = '';
+        transcriptDisplay.innerText = 'اضغط على الميكروفون وابدأ التحدث...';
+        editKeyboard.style.display = 'none';
+        editKeyboard.value = '';
+        isEditMode = false;
+    });
+
+    document.getElementById('editTextBtn').addEventListener('click', function() {
+        if (currentTranscript.trim() === '') {
+            alert('لا يوجد نص لتعديله!');
+            return;
+        }
+        // إظهار الكيبورد للتعديل
+        editKeyboard.style.display = 'block';
+        editKeyboard.value = currentTranscript;
+        transcriptDisplay.style.display = 'none';
+        isEditMode = true;
+        editKeyboard.focus();
+    });
+
+    // عند الانتهاء من التعديل (عند الضغط على Enter)
+    editKeyboard.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            currentTranscript = editKeyboard.value;
+            transcriptDisplay.innerText = currentTranscript;
+            transcriptDisplay.style.display = 'block';
+            editKeyboard.style.display = 'none';
+            isEditMode = false;
+        }
+    });
+
+    document.getElementById('addToCartBtn').addEventListener('click', function() {
+        if (currentTranscript.trim() === '') {
+            alert('لا يوجد طلب لإضافته!');
+            return;
+        }
+        cart.push(currentTranscript);
+        updateCartDisplay();
+        // لا نفرغ النص الحالي، بل نبقيه تحسباً
+        // لكن يمكننا تركه اختيارياً
+    });
+
+    document.getElementById('continueRecordingBtn').addEventListener('click', function() {
+        if (!recognition) return;
+        if (!isRecording) {
+            // يبدأ تسجيل جديد مع إبقاء النص السابق
+            recognition.start();
+        } else {
+            // إذا كان يسجل، لا نفعل شيئاً أو ننبه
+            alert('التسجيل قيد التشغيل بالفعل. اضغط على الميكروفون لإيقافه ثم استمر.');
+        }
+    });
+
+    // -------------------- عرض السلة --------------------
+    function updateCartDisplay() {
+        if (cart.length === 0) {
+            cartDiv.innerHTML = '<div style="color: #777; text-align: center; padding: 40px;">السلة فارغة</div>';
+            return;
+        }
+
+        let html = '';
+        cart.forEach((item, index) => {
+            html += `
+                <div class="cart-item">
+                    <div class="item-text">${item}</div>
+                    <div class="item-actions">
+                        <button class="item-btn edit-btn" onclick="editCartItem(${index})"><i class="fas fa-pen"></i></button>
+                        <button class="item-btn mic-btn" onclick="micEditCartItem(${index})"><i class="fas fa-microphone"></i></button>
+                        <button class="item-btn delete-btn" onclick="deleteCartItem(${index})"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `;
+        });
+        cartDiv.innerHTML = html;
+    }
+
+    // تعديل عنصر في السلة (بالكتابة)
+    window.editCartItem = function(index) {
+        const newText = prompt('عدل النص:', cart[index]);
+        if (newText !== null && newText.trim() !== '') {
+            cart[index] = newText;
+            updateCartDisplay();
+        }
+    };
+
+    // تعديل عنصر في السلة (بالصوت)
+    window.micEditCartItem = function(index) {
+        if (!recognition) {
+            alert('التعرف الصوتي غير مدعوم');
+            return;
+        }
+        // نطلب من المستخدم التحدث
+        alert('اضغط OK ثم تحدث لتعديل العنصر');
+        recognition.onresult = function(event) {
+            let finalTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                    finalTranscript += event.results[i][0].transcript;
+                }
+            }
+            if (finalTranscript.trim() !== '') {
+                cart[index] = finalTranscript;
+                updateCartDisplay();
+            }
+            // إعادة تعريف onresult الأصلي بشكل مبسط
+            setupOriginalOnResult();
+            recognition.stop();
+        };
+        recognition.start();
+        recognition.onend = function() {
+            recognition.stop();
+        };
+    };
+
+    // استرجاع onresult الأصلي
+    function setupOriginalOnResult() {
+        recognition.onresult = function(event) {
+            let interimTranscript = '';
+            let finalTranscript = '';
+
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    finalTranscript += transcript + ' ';
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+
+            if (finalTranscript !== '') {
+                currentTranscript = currentTranscript + ' ' + finalTranscript;
+            }
+
+            transcriptDisplay.innerText = currentTranscript + (interimTranscript ? ' (' + interimTranscript + '...)' : '');
+            if (!currentTranscript && !interimTranscript) {
+                transcriptDisplay.innerText = 'اضغط على الميكروفون وابدأ التحدث...';
+            }
+        };
+    }
+
+    window.deleteCartItem = function(index) {
+        cart.splice(index, 1);
+        updateCartDisplay();
+    };
+
+    // -------------------- إرسال الطلب --------------------
+    document.getElementById('sendOrderBtn').addEventListener('click', function() {
+        if (cart.length === 0) {
+            alert('السلة فارغة! أضف طلبات أولاً.');
+            return;
+        }
+        // عرض النافذة العائمة
+        generateTableButtons();
+        modal.style.display = 'flex';
+    });
+
+    // توليد أزرار الطاولات 1-15
+    function generateTableButtons() {
+        let buttonsHtml = '';
+        for (let i = 1; i <= 15; i++) {
+            buttonsHtml += `<button class="table-btn" onclick="selectTable(${i})">${i}</button>`;
+        }
+        tableGrid.innerHTML = buttonsHtml;
+    }
+
+    // اختيار طاولة
+    window.selectTable = function(tableNumber) {
+        sendOrderToFirebase(tableNumber);
+    };
+
+    document.getElementById('takeawayBtn').addEventListener('click', function() {
+        sendOrderToFirebase('takeaway');
+    });
+
+    function sendOrderToFirebase(table) {
+        // هنا سيتم ربط Firebase
+        // حالياً نعرض تنبيه ونفرغ السلة
+        alert(`تم إرسال الطلب إلى ${table === 'takeaway' ? 'Takeaway' : 'طاولة رقم ' + table} (محاكاة - سيتم الربط مع Firebase)`);
+
+        // مسح السلة بعد الإرسال
+        cart = [];
+        updateCartDisplay();
+        closeModal();
+
+        // هنا سيتم إرسال البيانات إلى Firebase:
+        // order = { items: cart, table: table, timestamp: new Date(), status: 'جديد' }
+    }
+
+    window.closeModal = function() {
+        modal.style.display = 'none';
+    };
+
+    // إغلاق المودال بالنقر خارجه
+    window.onclick = function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    };
+</script>
 </body>
 </html>
