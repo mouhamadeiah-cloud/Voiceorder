@@ -9,8 +9,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
     <style>
-        /* نفس التصميم الرائع - لم يتغير */
         * {
             margin: 0;
             padding: 0;
@@ -97,11 +99,11 @@
             border-radius: 16px;
             border-left: 5px solid #00e676;
             line-height: 1.6;
-            cursor: pointer;  /* مؤشر اليد عند المرور على النص */
+            cursor: pointer;
             transition: 0.2s;
         }
         .transcript-text:hover {
-            background: #252525;  /* تغيير لون الخلفية عند المرور */
+            background: #252525;
             border-left-color: #ffb300;
         }
 
@@ -128,7 +130,6 @@
 
         .btn i { font-size: 1.2rem; }
 
-        /* زر التعديل تمت إزالته بالكامل */
         .btn-cancel {
             background: #ff3d3d;
             color: white;
@@ -417,7 +418,6 @@
             }
         }
 
-        /* Hinweis für Klick auf Text */
         .click-hint {
             font-size: 0.9rem;
             color: #888;
@@ -442,11 +442,9 @@
         </div>
 
         <div class="text-display-area">
-            <!-- النص أصبح قابلاً للنقر -->
             <div class="transcript-text" id="transcriptDisplay" title="Klicke auf den Text zum Bearbeiten">
                 Drücke auf das Mikrofon und beginne zu sprechen...
             </div>
-            <!-- تلميح بسيط للنقر -->
             <div class="click-hint">
                 <i class="fas fa-mouse-pointer"></i> Klicke auf den Text zum Bearbeiten
             </div>
@@ -454,7 +452,6 @@
         </div>
 
         <div class="action-buttons">
-            <!-- زر Bearbeiten تمت إزالته -->
             <button class="btn btn-cancel" id="cancelTextBtn"><i class="fas fa-times"></i> Löschen</button>
             <button class="btn btn-add" id="addToCartBtn"><i class="fas fa-cart-plus"></i> In Warenkorb</button>
             <button class="btn btn-continue" id="continueRecordingBtn"><i class="fas fa-plus-circle"></i> Fortsetzen</button>
@@ -508,7 +505,27 @@
     let ignoreOnEnd = false;       // Steuerung für onEnd
     let currentEditIndex = -1;     // Aktueller Bearbeitungsindex
 
-    // DOM Elemente
+    // ==================== 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 ====================
+    // ====================        هــــــنا تــضــع رابــط Firebase       ====================
+    // ==================== 🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴🔴 ====================
+    
+const firebaseConfig = {
+  apiKey: "AIzaSyBixb8qkMJuJLWkCMHjJYeAMR9mu_qDSEk",
+  authDomain: "restaurantsysteme-eaff6.firebaseapp.com",
+  databaseURL: "https://restaurantsysteme-eaff6-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "restaurantsysteme-eaff6",
+  storageBucket: "restaurantsysteme-eaff6.firebasestorage.app",
+  messagingSenderId: "891911663005",
+  appId: "1:891911663005:web:85672b40c90c158c2ad374"
+};
+    
+    // ==================== 🔴 انتهى مكان وضع الرابط 🔴 ====================
+
+    // Firebase initialisieren
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // -------------------- DOM Elemente --------------------
     const recordBtn = document.getElementById('recordBtn');
     const transcriptDisplay = document.getElementById('transcriptDisplay');
     const editKeyboard = document.getElementById('editKeyboard');
@@ -623,13 +640,11 @@
     // -------------------- Event Listener --------------------
     recordBtn.addEventListener('click', toggleRecording);
 
-    // **NEU: النقر على النص لفتح التعديل**
     transcriptDisplay.addEventListener('click', function() {
         if (!finalText.trim()) {
             showToast('Kein Text zum Bearbeiten vorhanden!', 'error');
             return;
         }
-        // إظهار الكيبورد للتعديل
         editKeyboard.style.display = 'block';
         editKeyboard.value = finalText;
         transcriptDisplay.style.display = 'none';
@@ -637,7 +652,6 @@
         editKeyboard.focus();
     });
 
-    // Enter-Taste im Bearbeitungsfeld
     editKeyboard.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             finalText = editKeyboard.value;
@@ -648,17 +662,14 @@
         }
     });
 
-    // إلغاء التركيز إذا نقر خارجاً
     editKeyboard.addEventListener('blur', function() {
         if (isEditMode) {
-            // العودة للنص الأصلي بدون حفظ
             transcriptDisplay.style.display = 'block';
             editKeyboard.style.display = 'none';
             isEditMode = false;
         }
     });
 
-    // Text löschen
     document.getElementById('cancelTextBtn').addEventListener('click', function() {
         finalText = '';
         transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
@@ -667,7 +678,6 @@
         isEditMode = false;
     });
 
-    // Zum Warenkorb hinzufügen
     document.getElementById('addToCartBtn').addEventListener('click', function() {
         if (!finalText.trim()) {
             showToast('Bitte zuerst einen Text aufnehmen oder eingeben!', 'error');
@@ -680,7 +690,6 @@
         showToast('Bestellung zum Warenkorb hinzugefügt');
     });
 
-    // Aufnahme fortsetzen
     document.getElementById('continueRecordingBtn').addEventListener('click', function() {
         if (!recognition) return;
         if (!isRecording) {
@@ -715,14 +724,12 @@
         cartDiv.innerHTML = html;
     }
 
-    // Bearbeitungsmodal öffnen (für Warenkorb)
     window.openEditModal = function(index) {
         currentEditIndex = index;
         editModalInput.value = cart[index];
         openModal('editModal');
     };
 
-    // Änderungen speichern (für Warenkorb)
     document.getElementById('saveEditBtn').addEventListener('click', function() {
         const newText = editModalInput.value.trim();
         if (newText) {
@@ -733,14 +740,13 @@
         }
     });
 
-    // Warenkorb Item löschen
     window.deleteCartItem = function(index) {
         cart.splice(index, 1);
         updateCartDisplay();
         showToast('Bestellung entfernt');
     };
 
-    // -------------------- Bestellung senden --------------------
+    // -------------------- Bestellung senden (mit Firebase) --------------------
     document.getElementById('sendOrderBtn').addEventListener('click', function() {
         if (cart.length === 0) {
             showToast('Der Warenkorb ist leer!', 'error');
@@ -769,22 +775,32 @@
     function sendOrderToKitchen(table) {
         const tableText = table === 'takeaway' ? 'Takeaway' : `Tisch ${table}`;
         
+        // تحضير بيانات الطلب
         const orderData = {
             items: [...cart],
-            table: table,
-            timestamp: new Date().toISOString(),
-            status: 'neu'
+            table: table === 'takeaway' ? 0 : table,
+            tableDisplay: tableText,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            status: 'neu',
+            createdAt: new Date().toISOString()
         };
         
-        console.log('Bestellung:', orderData);
-        showToast(`✅ Bestellung an ${tableText} gesendet!`);
-        
-        cart = [];
-        updateCartDisplay();
-        closeModal('tableModal');
+        // حفظ في Firestore
+        db.collection('orders').add(orderData)
+            .then((docRef) => {
+                console.log('Bestellung gespeichert mit ID:', docRef.id);
+                showToast(`✅ Bestellung #${docRef.id.slice(-4)} an ${tableText} gesendet!`);
+                
+                cart = [];
+                updateCartDisplay();
+                closeModal('tableModal');
+            })
+            .catch((error) => {
+                console.error('Fehler beim Speichern:', error);
+                showToast('❌ Fehler beim Senden der Bestellung', 'error');
+            });
     }
 
-    // Modal schließen wenn außerhalb geklickt
     window.onclick = function(event) {
         if (event.target === tableModal) {
             closeModal('tableModal');
