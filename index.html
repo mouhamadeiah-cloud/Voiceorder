@@ -611,7 +611,6 @@ const firebaseConfig = {
   messagingSenderId: "891911663005",
   appId: "1:891911663005:web:85672b40c90c158c2ad374"
 };
-    
     // ==================== 🔴 انتهى مكان وضع الرابط 🔴 ====================
 
     // Firebase initialisieren
@@ -677,7 +676,7 @@ const firebaseConfig = {
                     oscillator2.frequency.value = 800;
                     gainNode2.gain.value = 0.4;
                     oscillator2.connect(gainNode2);
-                    gainNode2.connect(audioCtx.destination);
+                    oscillator2.connect(audioCtx.destination);
                     oscillator2.start();
                     oscillator2.stop(audioCtx.currentTime + 0.2);
                 }, 300);
@@ -819,36 +818,47 @@ const firebaseConfig = {
     // -------------------- Event Listener --------------------
     recordBtn.addEventListener('click', toggleRecording);
 
+    // ✅ النقر على النص لفتح التعديل
     transcriptDisplay.addEventListener('click', function() {
         if (!finalText.trim()) {
             showToast('Kein Text zum Bearbeiten vorhanden!', 'error');
             return;
         }
         editKeyboard.style.display = 'block';
-        editKeyboard.value = finalText;
+        editKeyboard.value = finalText;  // نسخ النص الحالي
         transcriptDisplay.style.display = 'none';
         isEditMode = true;
         editKeyboard.focus();
     });
 
+    // ✅ حفظ التعديل عند الضغط على Enter
     editKeyboard.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            finalText = editKeyboard.value;
+            e.preventDefault();
+            finalText = editKeyboard.value;  // تحديث المتغير
             transcriptDisplay.innerText = finalText;
             transcriptDisplay.style.display = 'block';
             editKeyboard.style.display = 'none';
             isEditMode = false;
+            console.log('Text aktualisiert:', finalText); // للتأكد
         }
     });
 
+    // ✅ حفظ التعديل عند فقدان التركيز
     editKeyboard.addEventListener('blur', function() {
         if (isEditMode) {
+            // إذا كان هناك تغيير، احفظه
+            if (editKeyboard.value !== finalText) {
+                finalText = editKeyboard.value;
+                transcriptDisplay.innerText = finalText;
+            }
             transcriptDisplay.style.display = 'block';
             editKeyboard.style.display = 'none';
             isEditMode = false;
         }
     });
 
+    // نص löschen
     document.getElementById('cancelTextBtn').addEventListener('click', function() {
         finalText = '';
         transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
@@ -857,11 +867,13 @@ const firebaseConfig = {
         isEditMode = false;
     });
 
+    // ✅ In Warenkorb - الآن يستخدم finalText المحدث
     document.getElementById('addToCartBtn').addEventListener('click', function() {
         if (!finalText.trim()) {
             showToast('Bitte zuerst einen Text aufnehmen oder eingeben!', 'error');
             return;
         }
+        console.log('Hinzufügen zum Warenkorb:', finalText); // للتأكد
         cart.push(finalText.trim());
         updateCartDisplay();
         finalText = '';
@@ -869,6 +881,7 @@ const firebaseConfig = {
         showToast('Bestellung zum Warenkorb hinzugefügt');
     });
 
+    // Aufnahme fortsetzen
     document.getElementById('continueRecordingBtn').addEventListener('click', function() {
         if (!recognition) return;
         if (!isRecording) {
