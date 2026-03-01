@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
+        /* نفس التصميم الرائع - لم يتغير */
         * {
             margin: 0;
             padding: 0;
@@ -96,6 +97,12 @@
             border-radius: 16px;
             border-left: 5px solid #00e676;
             line-height: 1.6;
+            cursor: pointer;  /* مؤشر اليد عند المرور على النص */
+            transition: 0.2s;
+        }
+        .transcript-text:hover {
+            background: #252525;  /* تغيير لون الخلفية عند المرور */
+            border-left-color: #ffb300;
         }
 
         .action-buttons {
@@ -121,11 +128,7 @@
 
         .btn i { font-size: 1.2rem; }
 
-        .btn-edit {
-            background: #ffb300;
-            color: #1a1a1a;
-            box-shadow: 0 5px 0 #b27100;
-        }
+        /* زر التعديل تمت إزالته بالكامل */
         .btn-cancel {
             background: #ff3d3d;
             color: white;
@@ -276,7 +279,6 @@
             background: #2a2a2a;
             color: white;
             margin-bottom: 20px;
-            direction: rtl;
         }
         .modal-input:focus {
             border-color: #00e676;
@@ -414,6 +416,18 @@
                 opacity: 1;
             }
         }
+
+        /* Hinweis für Klick auf Text */
+        .click-hint {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 8px;
+            text-align: center;
+        }
+        .click-hint i {
+            color: #00e676;
+            margin-right: 5px;
+        }
     </style>
 </head>
 <body>
@@ -428,14 +442,19 @@
         </div>
 
         <div class="text-display-area">
-            <div class="transcript-text" id="transcriptDisplay">
+            <!-- النص أصبح قابلاً للنقر -->
+            <div class="transcript-text" id="transcriptDisplay" title="Klicke auf den Text zum Bearbeiten">
                 Drücke auf das Mikrofon und beginne zu sprechen...
             </div>
-            <input type="text" id="editKeyboard" style="display: none;" placeholder="Text hier bearbeiten... (Enter zum Bestätigen)">
+            <!-- تلميح بسيط للنقر -->
+            <div class="click-hint">
+                <i class="fas fa-mouse-pointer"></i> Klicke auf den Text zum Bearbeiten
+            </div>
+            <input type="text" id="editKeyboard" style="display: none;" placeholder="Text bearbeiten... (Enter zum Bestätigen)">
         </div>
 
         <div class="action-buttons">
-            <button class="btn btn-edit" id="editTextBtn"><i class="fas fa-pen"></i> Bearbeiten</button>
+            <!-- زر Bearbeiten تمت إزالته -->
             <button class="btn btn-cancel" id="cancelTextBtn"><i class="fas fa-times"></i> Löschen</button>
             <button class="btn btn-add" id="addToCartBtn"><i class="fas fa-cart-plus"></i> In Warenkorb</button>
             <button class="btn btn-continue" id="continueRecordingBtn"><i class="fas fa-plus-circle"></i> Fortsetzen</button>
@@ -467,7 +486,7 @@
     </div>
 </div>
 
-<!-- Modal für Bearbeitung -->
+<!-- Modal für Bearbeitung (für Warenkorb) -->
 <div id="editModal" class="modal">
     <div class="modal-content">
         <h3>Bestellung bearbeiten</h3>
@@ -604,21 +623,13 @@
     // -------------------- Event Listener --------------------
     recordBtn.addEventListener('click', toggleRecording);
 
-    // Text löschen
-    document.getElementById('cancelTextBtn').addEventListener('click', function() {
-        finalText = '';
-        transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
-        editKeyboard.style.display = 'none';
-        editKeyboard.value = '';
-        isEditMode = false;
-    });
-
-    // Text bearbeiten (Tastatur)
-    document.getElementById('editTextBtn').addEventListener('click', function() {
+    // **NEU: النقر على النص لفتح التعديل**
+    transcriptDisplay.addEventListener('click', function() {
         if (!finalText.trim()) {
             showToast('Kein Text zum Bearbeiten vorhanden!', 'error');
             return;
         }
+        // إظهار الكيبورد للتعديل
         editKeyboard.style.display = 'block';
         editKeyboard.value = finalText;
         transcriptDisplay.style.display = 'none';
@@ -635,6 +646,25 @@
             editKeyboard.style.display = 'none';
             isEditMode = false;
         }
+    });
+
+    // إلغاء التركيز إذا نقر خارجاً
+    editKeyboard.addEventListener('blur', function() {
+        if (isEditMode) {
+            // العودة للنص الأصلي بدون حفظ
+            transcriptDisplay.style.display = 'block';
+            editKeyboard.style.display = 'none';
+            isEditMode = false;
+        }
+    });
+
+    // Text löschen
+    document.getElementById('cancelTextBtn').addEventListener('click', function() {
+        finalText = '';
+        transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
+        editKeyboard.style.display = 'none';
+        editKeyboard.value = '';
+        isEditMode = false;
     });
 
     // Zum Warenkorb hinzufügen
@@ -685,14 +715,14 @@
         cartDiv.innerHTML = html;
     }
 
-    // Bearbeitungsmodal öffnen
+    // Bearbeitungsmodal öffnen (für Warenkorb)
     window.openEditModal = function(index) {
         currentEditIndex = index;
         editModalInput.value = cart[index];
         openModal('editModal');
     };
 
-    // Änderungen speichern
+    // Änderungen speichern (für Warenkorb)
     document.getElementById('saveEditBtn').addEventListener('click', function() {
         const newText = editModalInput.value.trim();
         if (newText) {
@@ -747,8 +777,6 @@
         };
         
         console.log('Bestellung:', orderData);
-        
-        // ✅ فقط رسالة نصية بسيطة - لا prompt!
         showToast(`✅ Bestellung an ${tableText} gesendet!`);
         
         cart = [];
@@ -770,4 +798,3 @@
 </script>
 </body>
 </html>
-
