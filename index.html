@@ -395,11 +395,12 @@
 <script>
     // -------------------- Daten und Variablen --------------------
     let cart = [];                 // Warenkorb Array
-    let finalText = '';            // **NEU: Speichert nur den finalen Text**
+    let finalText = '';            // Speichert den finalen Text
     let isRecording = false;       // Aufnahmestatus
     let recognition;               // Speech Recognition Objekt
     let isEditMode = false;        // Bearbeitungsmodus
-    let ignoreOnEnd = false;       // **NEU: Steuerung für onEnd**
+    let lastFinalText = '';        // **NEU: Speichert den letzten finalen Text**
+    let ignoreOnEnd = false;       // Steuerung für onEnd
 
     // DOM Elemente
     const recordBtn = document.getElementById('recordBtn');
@@ -416,7 +417,7 @@
         recognition = new SpeechRecognition();
         recognition.lang = 'de-DE';
         recognition.continuous = true;
-        recognition.interimResults = true;
+        recognition.interimResults = true;  // Wir behalten interimResults für bessere UX
         recognition.maxAlternatives = 1;
 
         recognition.onstart = function() {
@@ -432,9 +433,7 @@
             recordBtn.innerHTML = '<i class="fas fa-microphone"></i>';
             console.log('Aufnahme beendet');
             
-            // **NEU: Wenn wir fortgesetzt haben, starte automatisch neu**
             if (!ignoreOnEnd) {
-                // Zeige nur den finalen Text ohne Interim
                 if (finalText) {
                     transcriptDisplay.innerText = finalText;
                 } else {
@@ -445,30 +444,34 @@
         };
 
         recognition.onresult = function(event) {
-            // **NEU: Saubere Trennung von interim und final**
             let interimTranscript = '';
             let finalTranscript = '';
             
+            // **VERBESSERT: Keine Duplikate mehr!**
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 const transcript = event.results[i][0].transcript;
+                
                 if (event.results[i].isFinal) {
-                    // Finale Ergebnisse - füge sie zum finalText hinzu
-                    finalTranscript += transcript + ' ';
+                    // **WICHTIG: Prüfe ob dieser Text schon hinzugefügt wurde**
+                    if (transcript !== lastFinalText) {
+                        finalTranscript += transcript + ' ';
+                        lastFinalText = transcript;  // Speichere den letzten Text
+                    }
                 } else {
-                    // Interims-Ergebnisse - nur für die Anzeige
                     interimTranscript += transcript;
                 }
             }
             
-            // **NEU: Füge finale Ergebnisse nur einmal hinzu**
+            // Füge neue finale Ergebnisse hinzu
             if (finalTranscript) {
                 finalText = finalText + finalTranscript;
             }
             
-            // **NEU: Anzeige kombinieren (final + interim)**
+            // Anzeige kombinieren (final + interim)
             if (finalText || interimTranscript) {
                 let displayText = finalText;
                 if (interimTranscript) {
+                    // Zeige interim Text in Klammern für bessere UX
                     displayText += ' (' + interimTranscript + '...)';
                 }
                 transcriptDisplay.innerText = displayText;
@@ -507,7 +510,6 @@
         if (isRecording) {
             recognition.stop();
         } else {
-            // **NEU: Nur starten, nicht zurücksetzen**
             recognition.start();
         }
     }
@@ -517,7 +519,8 @@
 
     // Text löschen
     document.getElementById('cancelTextBtn').addEventListener('click', function() {
-        finalText = '';  // **NEU: Finalen Text löschen**
+        finalText = '';
+        lastFinalText = '';  // **NEU: Auch den letzten Text zurücksetzen**
         transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
         editKeyboard.style.display = 'none';
         editKeyboard.value = '';
@@ -526,7 +529,7 @@
 
     // Text bearbeiten
     document.getElementById('editTextBtn').addEventListener('click', function() {
-        if (!finalText.trim()) {  // **NEU: Prüfe finalText**
+        if (!finalText.trim()) {
             alert('Kein Text zum Bearbeiten vorhanden!');
             return;
         }
@@ -540,7 +543,8 @@
     // Enter-Taste im Bearbeitungsfeld
     editKeyboard.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
-            finalText = editKeyboard.value;  // **NEU: Aktualisiere finalText**
+            finalText = editKeyboard.value;
+            lastFinalText = finalText;  // **NEU: Aktualisiere letzten Text**
             transcriptDisplay.innerText = finalText;
             transcriptDisplay.style.display = 'block';
             editKeyboard.style.display = 'none';
@@ -550,7 +554,7 @@
 
     // Zum Warenkorb hinzufügen
     document.getElementById('addToCartBtn').addEventListener('click', function() {
-        if (!finalText.trim()) {  // **NEU: Prüfe finalText**
+        if (!finalText.trim()) {
             alert('Bitte zuerst einen Text aufnehmen oder eingeben!');
             return;
         }
@@ -558,6 +562,7 @@
         updateCartDisplay();
         // Text zurücksetzen
         finalText = '';
+        lastFinalText = '';  // **NEU: Zurücksetzen für neue Aufnahme**
         transcriptDisplay.innerText = 'Drücke auf das Mikrofon und beginne zu sprechen...';
     });
 
@@ -565,7 +570,7 @@
     document.getElementById('continueRecordingBtn').addEventListener('click', function() {
         if (!recognition) return;
         if (!isRecording) {
-            ignoreOnEnd = true;  // **NEU: Verhindere automatisches Zurücksetzen**
+            ignoreOnEnd = true;
             recognition.start();
         } else {
             alert('Aufnahme läuft bereits.');
@@ -617,12 +622,18 @@
         
         const originalOnResult = recognition.onresult;
         const originalOnEnd = recognition.onend;
+        let tempLastText = '';  // **NEU: Für temporäre Aufnahme**
         
         recognition.onresult = function(event) {
             let spokenText = '';
             for (let i = event.resultIndex; i < event.results.length; i++) {
                 if (event.results[i].isFinal) {
-                    spokenText += event.results[i][0].transcript;
+                    const transcript = event.results[i][0].transcript;
+                    // **NEU: Auch hier Duplikate vermeiden**
+                    if (transcript !== tempLastText) {
+                        spokenText += transcript;
+                        tempLastText = transcript;
+                    }
                 }
             }
             if (spokenText.trim()) {
